@@ -1,0 +1,47 @@
+/* Centered toast overlay */
+.toast-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0.2s, opacity 0.2s;
+}
+.toast-overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
+.toast-box {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    box-shadow: 0 20px 35px -8px rgba(0,0,0,0.2);
+    min-width: 280px;
+    max-width: 400px;
+    animation: fadeInUp 0.3s ease;
+}
+.toast-box.success { border-top: 4px solid #10b981; }
+.toast-box.error { border-top: 4px solid #ef4444; }
+.toast-box i { font-size: 48px; margin-bottom: 12px; display: block; }
+.toast-box p { margin: 12px 0; font-size: 16px; }
+.toast-btn {
+    background: #0F5C5F;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    margin-top: 12px;
+}
+@keyframes fadeInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

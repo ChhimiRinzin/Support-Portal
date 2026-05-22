@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAA Support – ICT Requisition</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, sans-serif;
+        }
+
+        body {
+            background: #F4F6F9;
+            padding: 20px;
+        }
+
+        .form-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #0F5C5F 0%, #1A7F7A 100%);
+            color: white;
+            padding: 20px 24px;
+            text-align: center;
+        }
+
+        .form-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .form-body {
+            padding: 20px 24px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 20px 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #2d6a4f;
+            color: #0F5C5F;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        .items-table th {
+            background: #f1f5f9;
+            font-weight: 600;
+        }
+
+        .items-table input,
+        .items-table select,
+        .items-table textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .items-table textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .add-row-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: 0.2s ease;
+        }
+
+        .add-row-btn:hover {
+            background: #cbd5e1;
+        }
+
+        .info-note {
+            background: #e9f4f4;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: #0F5C5F;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #2d6a4f, #1b5e3f);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 40px;
+            width: 100%;
+            margin-top: 12px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+
+        .remove-btn {
+            background: #fee2e2;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            color: #dc2626;
+            font-size: 0.9rem;
+        }
+
+        .remove-btn:hover {
+            background: #fecaca;
+        }
+
+        .error-message {
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .form-body {
+                padding: 16px;
+            }
+
+            .items-table {
+                font-size: 0.75rem;
+            }
+
+            .items-table textarea {
+                min-height: 70px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="form-container">
+
+    <div class="form-header">
+        <h1>Royal Audit Authority</h1>
+        <p>Kawangjangsa, Thimphu</p>
+        <p style="margin-top: 8px;">
+            Date: <span id="currentDate"></span>
+        </p>
+    </div>
+
+    <div class="form-body">
+
+        <h2 style="text-align: center; font-size: 1.3rem; margin-bottom: 16px;">
+            ICT Support Requisition Form
+        </h2>
+
+        <div id="errorMsg" class="error-message"></div>
+
+        <form id="ictForm">
+
+            <div class="section-title">
+                ICT Issue Details
+            </div>
+
+            <table class="items-table">
+
+                <thead>
+                    <tr>
+                        <th style="width:8%">Sl.</th>
+                        <th style="width:25%">Device Type</th>
+                        <th style="width:55%">Problem Description</th>
+                        <th style="width:12%">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="itemsBody"></tbody>
+
+            </table>
+
+            <button type="button" class="add-row-btn" id="addRowBtn">
+                + Add Another Issue
+            </button>
+
+            <div class="info-note">
+                Your details (name, email, designation, division)
+                will automatically be attached to this request.
+            </div>
+
+            <button type="submit" class="btn-submit">
+                Submit ICT Request →
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+    const API_BASE = 'http://localhost:5000/api';
+
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+        window.location.href = 'index.html';
+    }
+
+    let currentUser = null;
+
+    async function loadUser() {
+
+        try {
+
+            const res = await fetch(`${API_BASE}/auth/me`, {
+                headers: {
+                    'x-auth-token': token
+                }
+            });
+
+            const user = await res.json();
+
+            if (!res.ok) {
+                throw new Error(user.message);
+            }
+
+            currentUser = user;
+
+        } catch (err) {
+
+            console.error('Failed to load user details', err);
+
+        }
+    }
+
+    document.getElementById('currentDate').innerText =
+        new Date().toLocaleDateString('en-GB');
+
+    let rowCounter = 1;
+
+    function addTableRow() {
+
+        const tbody = document.getElementById('itemsBody');
+
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td class="sl-cell">${rowCounter}</td>
+
+            <td>
+                <select class="item-type" required>
+                    <option value="">Select Device</option>
+                    <option value="Laptop">Laptop</option>
+                    <option value="Desktop">Desktop</option>
+                    <option value="Monitor">Monitor</option>
+                    <option value="WiFi">WiFi</option>
+                </select>
+            </td>
+
+            <td>
+                <textarea
+                    class="problem-description"
+                    placeholder="Describe the issue you are facing..."
+                    required></textarea>
+            </td>
+
+            <td>
+                <button
+                    type="button"
+                    class="remove-btn"
+                    onclick="removeRow(this)">
+                    ✖
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+
+        updateSlNumbers();
+    }
+
+    function removeRow(button) {
+
+        button.closest('tr').remove();
+
+        updateSlNumbers();
+    }
+
+    function updateSlNumbers() {
+
+        const rows = document.querySelectorAll('#itemsBody tr');
+
+        rows.forEach((row, index) => {
+
+            row.querySelector('.sl-cell').innerText = index + 1;
+
+        });
+
+        rowCounter = rows.length + 1;
+    }
+
+    document
+        .getElementById('addRowBtn')
+        .addEventListener('click', addTableRow);
+
+    addTableRow();
+
+    document.getElementById('ictForm')
+        .addEventListener('submit', async (e) => {
+
+        e.preventDefault();
+
+        const errorDiv = document.getElementById('errorMsg');
+
+        errorDiv.style.display = 'none';
+
+        if (!currentUser) {
+            await loadUser();
+        }
+
+        if (!currentUser) {
+
+            errorDiv.innerText =
+                'Unable to load your details. Please refresh and try again.';
+
+            errorDiv.style.display = 'block';
+
+            return;
+        }
+
+        const items = [];
+
+        const rows = document.querySelectorAll('#itemsBody tr');
+
+        rows.forEach(row => {
+
+            const itemType =
+                row.querySelector('.item-type')?.value.trim() || '';
+
+            const problemDescription =
+                row.querySelector('.problem-description')?.value.trim() || '';
+
+            if (itemType && problemDescription) {
+
+                items.push({
+                    itemType,
+                    problemDescription
+                });
+            }
+        });
+
+        if (items.length === 0) {
+
+            errorDiv.innerText =
+                'Please add at least one ICT issue.';
+
+            errorDiv.style.display = 'block';
+
+            return;
+        }
+
+        const requisitioner = {
+
+            name: currentUser.full_name || '',
+            email: currentUser.email || '',
+            designation: currentUser.designation || '',
+            division: currentUser.division || '',
+            phone: ''
+        };
+
+        const payload = {
+
+            category: 'ict',
+
+            title: `ICT Support Request by ${requisitioner.name}`,
+
+            description: items
+                .map(i => `${i.itemType}: ${i.problemDescription}`)
+                .join('\n'),
+
+            form_data: {
+
+                requisition_date: new Date().toISOString(),
+
+                items: items,
+
+                requisitioner: requisitioner
+            },
+
+            priority: 'normal'
+        };
+
+        try {
+
+            const response = await fetch(`${API_BASE}/requests`, {
+
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token
+                },
+
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message);
+            }
+
+            alert(`✅ Request submitted! Ticket: ${result.ticket_number}`);
+
+            window.location.href = 'dashboard.html';
+
+        } catch (err) {
+
+            errorDiv.innerText = err.message;
+
+            errorDiv.style.display = 'block';
+        }
+    });
+
+    loadUser();
+
+</script>
+
+</body>
+</html>

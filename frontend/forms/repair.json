@@ -1,0 +1,8 @@
+{
+    "title": "Repair & Maintenance",
+    "fields": [
+        {"type": "text", "name": "title", "label": "Request Title", "required": true},
+        {"type": "textarea", "name": "description", "label": "Description", "required": true},
+        {"type": "text", "name": "location", "label": "Location (room/building)"}
+    ]
+}

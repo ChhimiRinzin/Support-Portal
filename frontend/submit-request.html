@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Submit Request</title>
+    <style>
+        body { font-family: system-ui; background: #f0f4f8; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; }
+        h2 { color: #0F5C5F; }
+        input, textarea, select { width: 100%; padding: 8px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; }
+        button { background: #0F5C5F; color: white; padding: 10px; border: none; border-radius: 30px; cursor: pointer; width: 100%; }
+        .error { color: red; background: #fee2e2; padding: 10px; margin-bottom: 20px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Submit Request</h2>
+    <div id="formContainer">Loading...</div>
+</div>
+<script>
+    const API_BASE = 'http://localhost:5000/api';
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category');
+
+    if (!category) {
+        document.getElementById('formContainer').innerHTML = '<div class="error">❌ Missing category. Please go back and select a service.</div>';
+    } else {
+        const forms = {
+            ict: { title: "ICT Service Request", fields: [{type:"text",name:"title",label:"Title",required:true},{type:"textarea",name:"description",label:"Description",required:true},{type:"text",name:"device",label:"Device type"}] },
+            aims: { title: "AIMS Change Request", fields: [{type:"text",name:"title",label:"Title",required:true},{type:"textarea",name:"description",label:"Description",required:true},{type:"text",name:"module",label:"Module affected"}] },
+            vehicle: { title: "Vehicle Requisition", fields: [{type:"text",name:"title",label:"Title",required:true},{type:"textarea",name:"description",label:"Purpose",required:true},{type:"text",name:"destination",label:"Destination"}] },
+            asws_membership: { title: "ASWS Registration", fields: [{type:"text",name:"full_name",label:"Full Name",required:true},{type:"email",name:"email",label:"Email",required:true},{type:"text",name:"staff_id",label:"Staff ID"}] },
+            asws_loan: { title: "ASWS Loan Application", fields: [{type:"text",name:"title",label:"Loan Purpose",required:true},{type:"number",name:"amount",label:"Amount (GHS)",required:true},{type:"textarea",name:"description",label:"Reason"}] }
+        };
+        const schema = forms[category];
+        if (!schema) {
+            document.getElementById('formContainer').innerHTML = `<div class="error">Unknown category: ${category}</div>`;
+        } else {
+            let html = `<h3>${schema.title}</h3><form id="dynamicForm">`;
+            for (const f of schema.fields) {
+                html += `<div><label>${f.label}</label>`;
+                if (f.type === 'textarea') html += `<textarea name="${f.name}" required></textarea>`;
+                else html += `<input type="${f.type}" name="${f.name}" required>`;
+                html += `</div>`;
+            }
+            html += `<button type="submit">Submit Request</button></form>`;
+            document.getElementById('formContainer').innerHTML = html;
+            document.getElementById('dynamicForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = {};
+                for (const f of schema.fields) {
+                    const input = document.querySelector(`[name="${f.name}"]`);
+                    formData[f.name] = input.value;
+                }
+                const payload = {
+                    category: category,
+                    title: formData.title || `${category} request`,
+                    description: JSON.stringify(formData),
+                    form_data: formData,
+                    priority: 'normal'
+                };
+                const token = localStorage.getItem('token');
+                try {
+                    const res = await fetch(`${API_BASE}/requests`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await res.json();
+                    if (!res.ok) throw new Error(result.message);
+                    alert(`✅ Request submitted! Ticket: ${result.ticket_number}`);
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+if (user.is_manager === true) {
+    window.location.href = 'manager-dashboard.html';
+} else {
+    window.location.href = 'dashboard.html';
+}
+                } catch (err) { alert('Error: ' + err.message); }
+            });
+        }
+    }
+</script>
+</body>
+</html>

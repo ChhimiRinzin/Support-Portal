@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Details – RAA Support</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #F4F6F9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        h1 {
+            font-size: 1.7rem;
+            color: #0F5C5F;
+        }
+        button, .btn-secondary {
+            background: #0F5C5F;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #0a4648;
+            transform: translateY(-1px);
+        }
+        .info-card {
+            background: #F8FAFC;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid #E2E8F0;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px 20px;
+            margin: 16px 0;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #334155;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+        }
+        .status-pending_approval {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        .status-approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status-in_progress {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid #E2E8F0;
+            padding: 10px;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+        .items-table th {
+            background: #F1F5F9;
+            font-weight: 600;
+        }
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 24px 0;
+            padding: 16px 0;
+            border-top: 1px solid #E2E8F0;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        select {
+            padding: 6px 12px;
+            border-radius: 30px;
+            border: 1px solid #CBD5E1;
+            background: white;
+        }
+        .comment {
+            border-left: 3px solid #0F5C5F;
+            margin: 12px 0;
+            padding: 12px 16px;
+            background: #F8FAFC;
+            border-radius: 12px;
+        }
+        .internal-note {
+            background: #FEF9E3;
+            border-left-color: #F59E0B;
+        }
+        .comment-meta {
+            font-size: 0.8rem;
+            color: #64748B;
+            margin-bottom: 6px;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid #CBD5E1;
+            font-size: 0.9rem;
+            margin: 8px 0;
+        }
+        .error-box {
+            background: #FEE2E2;
+            color: #B91C1C;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+        }
+        hr {
+            margin: 24px 0;
+            border-color: #E2E8F0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-ticket-alt"></i> Request Details</h1>
+        <button onclick="window.location.href='manager-dashboard.html'"><i class="fas fa-arrow-left"></i> Back to Dashboard</button>
+    </div>
+    <div id="content"></div>
+</div>
+
+<script>
+    // Version marker to confirm cache refresh
+    console.log('✅ request-detail.html loaded (version: 2026-05-14-final)');
+
+    const API_BASE = 'http://localhost:5000/api';
+    const token = localStorage.getItem('token');
+    if (!token) {
+        document.getElementById('content').innerHTML = `<div class="error-box">Not authenticated. <button onclick="window.location.href='index.html'">Login</button></div>`;
+    } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        const requestId = urlParams.get('id');
+        if (!requestId || isNaN(parseInt(requestId))) {
+            document.getElementById('content').innerHTML = `<div class="error-box">Invalid Ticket ID. <button onclick="window.location.href='manager-dashboard.html'">Go back</button></div>`;
+        } else {
+            loadTicket(parseInt(requestId));
+        }
+    }
+
+    let currentTicket = null;
+    let currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    let canManage = false;
+
+    async function apiCall(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json', 'x-auth-token': token };
+        const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        if (res.status === 401) {
+            localStorage.clear();
+            window.location.href = 'index.html';
+            throw new Error('Session expired');
+        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Request failed');
+        return data;
+    }
+
+    async function loadTicket(id) {
+        try {
+            const data = await apiCall(`/requests/${id}`);
+            currentTicket = data.ticket;
+            canManage = (currentUser.id !== currentTicket.created_by);
+            renderTicket();
+            renderComments(data.comments);
+        } catch (err) {
+            document.getElementById('content').innerHTML = `<div class="error-box">Error: ${err.message}</div>`;
+        }
+    }
+
+    function renderTicket() {
+        const container = document.getElementById('content');
+        const fd = currentTicket.form_data || {};
+        let requisitionerHtml = '';
+        let itemsHtml = '';
+
+        // Requisitioner info
+        if (fd.requisitioner) {
+            const r = fd.requisitioner;
+            requisitionerHtml = `
+                <div class="info-card">
+                    <h3><i class="fas fa-user"></i> Requisitioned by</h3>
+                    <div class="info-grid">
+                        <span class="info-label">Name:</span><span>${escapeHtml(r.name || '-')}</span>
+                        <span class="info-label">Designation:</span><span>${escapeHtml(r.designation || '-')}</span>
+                        <span class="info-label">Division:</span><span>${escapeHtml(r.division || '-')}</span>
+                        <span class="info-label">Email:</span><span>${escapeHtml(r.email || '-')}</span>
+                        <span class="info-label">Phone:</span><span>${escapeHtml(r.phone || '-')}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Items table
+        if (fd.items && fd.items.length) {
+            itemsHtml = `
+                <div class="info-card">
+                    <h3><i class="fas fa-list"></i> Items requested</h3>
+                    <table class="items-table">
+                        <thead><tr><th>#</th><th>Item Type</th><th>Defects</th><th>Remarks</th></tr></thead>
+                        <tbody>
+                            ${fd.items.map((item, idx) => `
+                                <tr>
+                                    <td>${idx+1}</td>
+                                    <td>${escapeHtml(item.itemType || '')}</td>
+                                    <td>${escapeHtml(item.defects || '')}</td>
+                                    <td>${escapeHtml(item.remarks || '')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Status badge
+        let statusClass = 'status-badge';
+        if (currentTicket.status === 'pending_approval') statusClass += ' status-pending_approval';
+        else if (currentTicket.status === 'approved') statusClass += ' status-approved';
+        else if (currentTicket.status === 'in_progress') statusClass += ' status-in_progress';
+        let statusHtml = `<span class="${statusClass}">${currentTicket.status.replace('_',' ')}</span>`;
+
+        let actionHtml = '';
+        if (canManage) {
+            actionHtml = `
+                <div class="action-bar">
+                    <select id="statusSelect">
+                        <option value="pending_approval" ${currentTicket.status === 'pending_approval' ? 'selected' : ''}>Pending Approval</option>
+                        <option value="approved" ${currentTicket.status === 'approved' ? 'selected' : ''}>Approved</option>
+                        <option value="in_progress" ${currentTicket.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="resolved" ${currentTicket.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                        <option value="rejected" ${currentTicket.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                    </select>
+                    <button id="updateStatusBtn">Update Status</button>
+                    ${currentTicket.status === 'pending_approval' ? '<button id="approveBtn" style="background:#10b981;">✅ Approve</button>' : ''}
+                </div>
+            `;
+        }
+
+        container.innerHTML = `
+            <div class="info-card">
+                <h3><i class="fas fa-ticket-alt"></i> Ticket information</h3>
+                <div class="info-grid">
+                    <span class="info-label">Ticket number:</span><span>${escapeHtml(currentTicket.ticket_number)}</span>
+                    <span class="info-label">Title:</span><span>${escapeHtml(currentTicket.title)}</span>
+                    <span class="info-label">Category:</span><span>${escapeHtml(currentTicket.category)}</span>
+                    <span class="info-label">Requester:</span><span>${escapeHtml(currentTicket.requester_name || currentTicket.requester_email)}</span>
+                    <span class="info-label">Created:</span><span>${new Date(currentTicket.created_at).toLocaleString()}</span>
+                    <span class="info-label">Status:</span><span>${statusHtml}</span>
+                    <span class="info-label">Priority:</span><span>${escapeHtml(currentTicket.priority)}</span>
+                    <span class="info-label">Description:</span><span>${escapeHtml(currentTicket.description)}</span>
+                </div>
+            </div>
+            ${requisitionerHtml}
+            ${itemsHtml}
+            ${actionHtml}
+            <hr>
+            <div id="commentsSection"></div>
+            <div style="margin-top: 24px;">
+                <h3><i class="fas fa-comment"></i> Add comment</h3>
+                <textarea id="newComment" rows="3" placeholder="Write your message..."></textarea>
+                <div style="margin: 8px 0;"><label><input type="checkbox" id="internalCheck"> Internal note (team only)</label></div>
+                <button id="submitCommentBtn">Post Comment</button>
+            </div>
+        `;
+
+        if (canManage) {
+            document.getElementById('updateStatusBtn').onclick = async () => {
+                const newStatus = document.getElementById('statusSelect').value;
+                await apiCall(`/requests/${currentTicket.id}/status`, { method: 'PUT', body: JSON.stringify({ status: newStatus }) });
+                loadTicket(currentTicket.id);
+            };
+            document.getElementById('approveBtn')?.addEventListener('click', async () => {
+                await apiCall(`/requests/${currentTicket.id}/approve`, { method: 'PUT' });
+                loadTicket(currentTicket.id);
+            });
+        }
+        document.getElementById('submitCommentBtn').onclick = async () => {
+            const message = document.getElementById('newComment').value.trim();
+            if (!message) return alert('Please enter a comment');
+            const isInternal = document.getElementById('internalCheck').checked;
+            await apiCall(`/requests/${currentTicket.id}/comment`, {
+                method: 'POST',
+                body: JSON.stringify({ message, is_internal: isInternal })
+            });
+            document.getElementById('newComment').value = '';
+            loadTicket(currentTicket.id);
+        };
+    }
+
+    function renderComments(comments) {
+        const container = document.getElementById('commentsSection');
+        if (!comments.length) {
+            container.innerHTML = '<h3><i class="fas fa-comments"></i> Comments</h3><p>No comments yet.</p>';
+            return;
+        }
+        let html = '<h3><i class="fas fa-comments"></i> Comments</h3>';
+        for (const c of comments) {
+            const isInternal = c.is_internal;
+            if (isInternal && !canManage && currentTicket.created_by === currentUser.id) continue;
+            html += `
+                <div class="comment ${isInternal ? 'internal-note' : ''}">
+                    <div class="comment-meta">
+                        <strong>${escapeHtml(c.author_name)}</strong> · ${new Date(c.created_at).toLocaleString()}
+                        ${isInternal ? '<span style="margin-left:8px;">🔒 Internal note</span>' : ''}
+                    </div>
+                    <div>${escapeHtml(c.message)}</div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+</script>
+</body>
+</html>

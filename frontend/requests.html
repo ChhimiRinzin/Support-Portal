@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Requests</title>
+    <style>
+        body { font-family: system-ui; background: #f0f4f8; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; cursor: pointer; }
+        th { background: #f1f5f9; }
+        .status-badge { background: #e2e8f0; padding: 4px 12px; border-radius: 30px; font-size: 12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>My Requests</h2>
+    <div id="content">Loading...</div>
+</div>
+<script>
+    const API_BASE = 'http://localhost:5000/api';
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'index.html';
+
+    async function loadRequests() {
+        const res = await fetch(`${API_BASE}/requests`, { headers: { 'x-auth-token': token } });
+        const requests = await res.json();
+        if (!res.ok) throw new Error(requests.message);
+        const tbody = requests.map(r => `
+            <tr onclick="window.location.href='request-detail.html?id=${r.id}'">
+                <td>${r.ticket_number}</td><td>${r.category}</td><td>${r.title}</td>
+                <td><span class="status-badge">${r.status}</span></td>
+                <td>${new Date(r.created_at).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+        document.getElementById('content').innerHTML = `
+            <table>
+                <thead><tr><th>Ticket #</th><th>Category</th><th>Title</th><th>Status</th><th>Created</th></tr></thead>
+                <tbody>${tbody || '<tr><td colspan="5">No requests found</td></tr>'}</tbody>
+            </table>
+            <p><button onclick="window.location.href='dashboard.html'">Back to Dashboard</button></p>
+        `;
+    }
+    loadRequests().catch(err => document.getElementById('content').innerHTML = `<p style="color:red">Error: ${err.message}</p>`);
+</script>
+</body>
+</html>
