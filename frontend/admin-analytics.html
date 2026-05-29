@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Analytics Dashboard | RAA Support</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #F4F6F9;
+            color: #1E293B;
+        }
+
+        /* Sidebar (same as before) */
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #E2E8F0;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #E2E8F0;
+            text-align: center;
+        }
+        .sidebar-logo {
+            max-width: 100%;
+            max-height: 70px;
+        }
+        .nav-menu {
+            flex: 1;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            color: #334155;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .nav-item:hover { background: #E9F4F4; color: #0F5C5F; }
+        .nav-item.active { background: #0F5C5F; color: white; }
+        .nav-bottom {
+            margin-top: auto;
+            padding: 16px 12px;
+            border-top: 1px solid #E2E8F0;
+        }
+        .main {
+            flex: 1;
+            margin-left: 260px;
+            padding: 24px 28px;
+        }
+        .topbar {
+            background: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-bottom: 1px solid #E2E8F0;
+            margin-bottom: 24px;
+        }
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            background: #0F5C5F;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            border-left: 4px solid;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #64748B;
+            margin-top: 6px;
+        }
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .chart-card h3 {
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+        }
+        canvas {
+            max-height: 300px;
+            width: 100%;
+        }
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 24px 0;
+            align-items: center;
+        }
+        .search-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        .search-wrapper input {
+            width: 100%;
+            padding: 8px 14px 8px 36px;
+            border-radius: 30px;
+            border: 1px solid #CBD5E1;
+        }
+        .search-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        table {
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        th {
+            background: #F8FAFC;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .menu-toggle { display: block; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="images/dashboard_logo.png" alt="RAA Logo" class="sidebar-logo">
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item active" onclick="window.location.href='admin-analytics.html'"><i class="fas fa-chart-line"></i> Analytics</div>
+            <div class="nav-item" onclick="window.location.href='manager-dashboard.html'"><i class="fas fa-tasks"></i> Tickets Manager</div>
+            <div class="nav-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</div>
+        </div>
+        <div class="nav-bottom">
+            <div class="nav-item" id="settingsBtn"><i class="fas fa-cog"></i> Settings</div>
+        </div>
+    </div>
+    <div class="main">
+        <div class="topbar">
+            <button class="menu-toggle" id="menuToggle" style="background:none; border:none; font-size:1.3rem;"><i class="fas fa-bars"></i></button>
+            <div><span id="userName"></span> <div class="user-avatar" id="userAvatar" style="display:inline-flex; margin-left:10px;"></div></div>
+        </div>
+
+        <h1><i class="fas fa-chart-pie"></i> Analytics Dashboard</h1>
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="charts-row">
+            <div class="chart-card"><h3><i class="fas fa-chart-bar"></i> Tickets by Category</h3><canvas id="categoryChart"></canvas></div>
+            <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> Tickets by Status</h3><canvas id="statusChart"></canvas></div>
+            <div class="chart-card"><h3><i class="fas fa-chart-line"></i> Last 7 Days</h3><canvas id="trendChart"></canvas></div>
+        </div>
+
+        <div class="filter-bar">
+            <div class="search-wrapper"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search tickets..."></div>
+            <select id="statusFilter"><option value="">All status</option><option>pending_approval</option><option>approved</option><option>in_progress</option><option>resolved</option><option>rejected</option></select>
+            <select id="categoryFilter"><option value="">All categories</option><option>repair</option><option>ict</option><option>vehicle</option><option>aims</option><option>asws_membership</option><option>asws_loan</option></select>
+        </div>
+        <div id="ticketsTableContainer"></div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:5000/api';
+    let allTickets = [];
+    let filteredTickets = [];
+
+    function getToken() { return localStorage.getItem('token'); }
+    function getUser() { return JSON.parse(localStorage.getItem('user') || '{}'); }
+
+    async function apiCall(endpoint, options = {}) {
+        const token = getToken();
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        if (token) headers['x-auth-token'] = token;
+        const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        if (res.status === 401) { localStorage.clear(); window.location.href = 'index.html'; throw new Error('Session expired'); }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        return data;
+    }
+
+    const user = getUser();
+    if (!user || !user.id) window.location.href = 'index.html';
+    document.getElementById('userName').innerText = user.full_name || user.email;
+    document.getElementById('userAvatar').innerText = (user.full_name || 'U').charAt(0).toUpperCase();
+
+    document.getElementById('logoutBtn').onclick = () => { localStorage.clear(); window.location.href = 'index.html'; };
+    document.getElementById('settingsBtn').onclick = () => { window.location.href = 'settings.html'; };
+
+    // Sidebar toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    menuToggle?.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+    async function loadAllTickets() {
+        try {
+            const requests = await apiCall('/requests');
+            // If backend returns only user's tickets, you'll need to modify backend.
+            // For now, assume it returns all tickets for admin.
+            allTickets = requests;
+            filteredTickets = [...allTickets];
+            applyFiltersAndRender();
+        } catch (err) {
+            console.error(err);
+            document.getElementById('statsGrid').innerHTML = `<div class="stat-card">Error loading tickets: ${err.message}</div>`;
+        }
+    }
+
+    function applyFiltersAndRender() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const status = document.getElementById('statusFilter').value;
+        const category = document.getElementById('categoryFilter').value;
+        filteredTickets = allTickets.filter(t => {
+            const matchSearch = t.ticket_number.toLowerCase().includes(search) || t.title.toLowerCase().includes(search);
+            const matchStatus = !status || t.status === status;
+            const matchCategory = !category || t.category === category;
+            return matchSearch && matchStatus && matchCategory;
+        });
+        renderStats();
+        renderCharts();
+        renderTable();
+    }
+
+    function renderStats() {
+        const total = filteredTickets.length;
+        const pending = filteredTickets.filter(t => t.status === 'pending_approval').length;
+        const approved = filteredTickets.filter(t => t.status === 'approved').length;
+        const rejected = filteredTickets.filter(t => t.status === 'rejected').length;
+        const vehicle = filteredTickets.filter(t => t.category === 'vehicle').length;
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="stat-card" style="border-left-color:#3B82F6"><div class="stat-number">${total}</div><div class="stat-label">Total Tickets</div></div>
+            <div class="stat-card" style="border-left-color:#F59E0B"><div class="stat-number">${pending}</div><div class="stat-label">Pending Approval</div></div>
+            <div class="stat-card" style="border-left-color:#10B981"><div class="stat-number">${approved}</div><div class="stat-label">Approved</div></div>
+            <div class="stat-card" style="border-left-color:#EF4444"><div class="stat-number">${rejected}</div><div class="stat-label">Rejected</div></div>
+            <div class="stat-card" style="border-left-color:#8B5CF6"><div class="stat-number">${vehicle}</div><div class="stat-label">Vehicle Requests</div></div>
+        `;
+    }
+
+    let categoryChart, statusChart, trendChart;
+
+    function renderCharts() {
+        // Category counts
+        const categories = ['repair', 'ict', 'vehicle', 'aims', 'asws_membership', 'asws_loan'];
+        const categoryCounts = categories.map(cat => filteredTickets.filter(t => t.category === cat).length);
+        if (categoryChart) categoryChart.destroy();
+        categoryChart = new Chart(document.getElementById('categoryChart'), {
+            type: 'bar',
+            data: { labels: categories.map(c => c.replace('_',' ')), datasets: [{ label: 'Tickets', data: categoryCounts, backgroundColor: '#0F5C5F' }] },
+            options: { responsive: true, maintainAspectRatio: true }
+        });
+
+        // Status counts
+        const statuses = ['pending_approval', 'approved', 'in_progress', 'resolved', 'rejected'];
+        const statusCounts = statuses.map(s => filteredTickets.filter(t => t.status === s).length);
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(document.getElementById('statusChart'), {
+            type: 'pie',
+            data: { labels: statuses.map(s => s.replace('_',' ')), datasets: [{ data: statusCounts, backgroundColor: ['#F59E0B','#10B981','#3B82F6','#8B5CF6','#EF4444'] }] },
+            options: { responsive: true }
+        });
+
+        // Last 7 days trend
+        const last7 = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(); d.setDate(d.getDate() - i);
+            last7.push(d.toISOString().slice(0,10));
+        }
+        const trendData = last7.map(date => filteredTickets.filter(t => t.created_at && t.created_at.slice(0,10) === date).length);
+        if (trendChart) trendChart.destroy();
+        trendChart = new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: { labels: last7, datasets: [{ label: 'Tickets created', data: trendData, borderColor: '#0F5C5F', tension: 0.2 }] },
+            options: { responsive: true }
+        });
+    }
+
+    function renderTable() {
+        const container = document.getElementById('ticketsTableContainer');
+        if (!filteredTickets.length) {
+            container.innerHTML = '<div class="empty-state" style="text-align:center; padding:40px;">No tickets match the filters.</div>';
+            return;
+        }
+        let html = `<table><thead><tr><th>Ticket #</th><th>Title</th><th>Category</th><th>Status</th><th>Created</th><th>Requester</th></tr></thead><tbody>`;
+        filteredTickets.slice(0, 100).forEach(t => {
+            html += `<tr>
+                        <td>${t.ticket_number}</td>
+                        <td>${escapeHtml(t.title)}</td>
+                        <td>${t.category.replace('_',' ')}</td>
+                        <td><span class="status-badge status-${t.status}">${t.status.replace('_',' ')}</span></td>
+                        <td>${new Date(t.created_at).toLocaleDateString()}</td>
+                        <td>${escapeHtml(t.requester_name || t.requester_email)}</td>
+                     </tr>`;
+        });
+        html += `</tbody></table><p style="margin-top:8px;">Showing up to 100 recent tickets. Use filters.</p>`;
+        container.innerHTML = html;
+    }
+
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+
+    document.getElementById('searchInput').addEventListener('input', applyFiltersAndRender);
+    document.getElementById('statusFilter').addEventListener('change', applyFiltersAndRender);
+    document.getElementById('categoryFilter').addEventListener('change', applyFiltersAndRender);
+
+    loadAllTickets();
+</script>
+</body>
+</html>

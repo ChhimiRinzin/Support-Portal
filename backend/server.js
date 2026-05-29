@@ -13,11 +13,13 @@ app.use('/uploads', express.static('uploads'));
 const authRoutes = require('./routes/auth');
 const requestRoutes = require('./routes/requests');
 const notificationRoutes = require('./routes/notifications');
+const driverRoutes = require('./routes/drivers');
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/drivers', driverRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => res.json({ message: 'API working' }));

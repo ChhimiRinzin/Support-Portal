@@ -111,14 +111,22 @@
         .btn-submit {
             background: linear-gradient(135deg, #2d6a4f, #1b5e3f);
             color: white;
-            padding: 12px 20px;
+            padding: 10px 24px;
             border: none;
             border-radius: 40px;
-            width: 100%;
-            margin-top: 12px;
+            width: auto;
+            min-width: 160px;
+            margin: 12px auto 0;
             cursor: pointer;
             font-size: 0.95rem;
             transition: 0.2s ease;
+            display: block;
+        }
+
+        .btn-submit.disabled, .btn-submit:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .btn-submit:hover {
@@ -196,8 +204,8 @@
                 <thead>
                     <tr>
                         <th style="width:8%">Sl.</th>
-                        <th style="width:25%">Device Type</th>
-                        <th style="width:55%">Problem Description</th>
+                        <th style="width:25%">Device Type *</th>
+                        <th style="width:55%">Problem Description *</th>
                         <th style="width:12%">Action</th>
                     </tr>
                 </thead>
@@ -215,7 +223,7 @@
                 will automatically be attached to this request.
             </div>
 
-            <button type="submit" class="btn-submit">
+            <button type="submit" class="btn-submit" id="submitBtn">
                 Submit ICT Request →
             </button>
 
@@ -236,6 +244,7 @@
     }
 
     let currentUser = null;
+    const submitBtn = document.getElementById('submitBtn');
 
     async function loadUser() {
 
@@ -357,34 +366,34 @@
             return;
         }
 
-        const items = [];
-
+        // Validate each row: device type and problem description must be filled
         const rows = document.querySelectorAll('#itemsBody tr');
+        const items = [];
+        let hasError = false;
 
-        rows.forEach(row => {
+        for (const row of rows) {
+            const itemType = row.querySelector('.item-type')?.value || '';
+            const problemDescription = row.querySelector('.problem-description')?.value.trim();
 
-            const itemType =
-                row.querySelector('.item-type')?.value.trim() || '';
-
-            const problemDescription =
-                row.querySelector('.problem-description')?.value.trim() || '';
-
-            if (itemType && problemDescription) {
-
-                items.push({
-                    itemType,
-                    problemDescription
-                });
+            if (!itemType) {
+                errorDiv.innerText = 'Please select a device type for all rows.';
+                errorDiv.style.display = 'block';
+                hasError = true;
+                break;
             }
-        });
+            if (!problemDescription) {
+                errorDiv.innerText = 'Please describe the problem for all rows.';
+                errorDiv.style.display = 'block';
+                hasError = true;
+                break;
+            }
+            items.push({ itemType, problemDescription });
+        }
 
+        if (hasError) return;
         if (items.length === 0) {
-
-            errorDiv.innerText =
-                'Please add at least one ICT issue.';
-
+            errorDiv.innerText = 'Please add at least one ICT issue.';
             errorDiv.style.display = 'block';
-
             return;
         }
 
@@ -419,6 +428,12 @@
             priority: 'normal'
         };
 
+        // Disable button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.classList.add('disabled');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Submitting...';
+
         try {
 
             const response = await fetch(`${API_BASE}/requests`, {
@@ -448,6 +463,11 @@
             errorDiv.innerText = err.message;
 
             errorDiv.style.display = 'block';
+
+            // Re-enable button on error
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('disabled');
+            submitBtn.textContent = originalText;
         }
     });
 

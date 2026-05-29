@@ -2,9 +2,10 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
+const { sendEmail } = require('../services/emailService');
 const router = express.Router();
 
-// Register
+// ============== REGISTER ==============
 router.post('/register', async (req, res) => {
     const { full_name, email, designation, division, password } = req.body;
     if (!full_name || !email || !password) return res.status(400).json({ message: 'Missing required fields' });
@@ -19,16 +20,29 @@ router.post('/register', async (req, res) => {
              RETURNING id, full_name, email, designation, division`,
             [email.split('@')[0], full_name, email, designation, division, hashed]
         );
-        res.status(201).json({ message: 'Registration successful', user: result.rows[0] });
+        const newUser = result.rows[0];
+
+        if (email) {
+            sendEmail(
+                email,
+                'Welcome to RAA Support Portal',
+                `<h2>Welcome, ${full_name}!</h2>
+                 <p>Your account has been successfully created.</p>
+                 <p>You can now log in at <a href="http://localhost:3000/login.html">RAA Support Portal</a>.</p>
+                 <p>If you did not request this, please ignore this email.</p>`
+            ).catch(err => console.error('Welcome email error:', err));
+        }
+
+        res.status(201).json({ message: 'Registration successful', user: newUser });
     } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// Login
+// ============== LOGIN ==============
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
 
-    // Hardcoded ICT manager (chhimirinzin28@gmail.com / ict123)
+    // Hardcoded ICT manager
     if (email.toLowerCase() === 'chhimirinzin28@gmail.com' && password === 'ict123') {
         let userResult = await pool.query('SELECT * FROM users WHERE email = $1', ['chhimirinzin28@gmail.com']);
         let user;
@@ -42,7 +56,6 @@ router.post('/login', async (req, res) => {
         } else {
             user = userResult.rows[0];
         }
-        // Ensure ICT permissions exist
         await pool.query(
             `INSERT INTO user_service_permissions (user_id, category) VALUES ($1, 'ict') ON CONFLICT DO NOTHING`,
             [user.id]
@@ -72,7 +85,7 @@ router.post('/login', async (req, res) => {
         });
     }
 
-    // Hardcoded AIMS manager (aims.manager@raa.gov / aims123)
+    // Hardcoded AIMS manager
     if (email.toLowerCase() === 'migmad@bhutanaudit.gov.bt' && password === 'migma123') {
         let userResult = await pool.query('SELECT * FROM users WHERE email = $1', ['migmad@bhutanaudit.gov.bt']);
         let user;
@@ -80,13 +93,12 @@ router.post('/login', async (req, res) => {
             const insertResult = await pool.query(
                 `INSERT INTO users (username, full_name, email, password_hash, department, role, is_asws_authorized)
                  VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-                ['Migma Dorji', 'AIMS Manager', 'migmad@bhutandurit.gov.bt', 'dummy', 'AIMS Department', 'manager', false]
+                ['migmad', 'AIMS Manager', 'migmad@bhutanaudit.gov.bt', 'dummy', 'AIMS Department', 'manager', false]
             );
             user = insertResult.rows[0];
         } else {
             user = userResult.rows[0];
         }
-        // Ensure AIMS permissions exist
         await pool.query(
             `INSERT INTO user_service_permissions (user_id, category) VALUES ($1, 'aims') ON CONFLICT DO NOTHING`,
             [user.id]
@@ -115,45 +127,45 @@ router.post('/login', async (req, res) => {
             }
         });
     }
-    // Hardcoded ADM (adm@raa.gov / adm123)
-if (email.toLowerCase() === 'adm@raa.gov' && password === 'adm123') {
-    let userResult = await pool.query('SELECT * FROM users WHERE email = $1', ['adm@raa.gov']);
-    let user;
-    if (userResult.rows.length === 0) {
-        const insertResult = await pool.query(
-            `INSERT INTO users (username, full_name, email, password_hash, department, role, is_asws_authorized)
-             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-            ['adm_user', 'Administrative Officer', 'adm@raa.gov', 'dummy', 'Administration', 'manager', false]
-        );
-        user = insertResult.rows[0];
-    } else {
-        user = userResult.rows[0];
-    }
-    // Ensure permissions exist
-    await pool.query(
-        `INSERT INTO user_service_permissions (user_id, category) VALUES ($1, 'vehicle') ON CONFLICT DO NOTHING`,
-        [user.id]
-    );
-    await pool.query(
-        `INSERT INTO category_assignments (category, fallback_user_id) VALUES ('vehicle', $1) ON CONFLICT (category) DO UPDATE SET fallback_user_id = EXCLUDED.fallback_user_id`,
-        [user.id]
-    );
-    const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role, is_manager: true },
-        process.env.JWT_SECRET || 'raa_support_secret',
-        { expiresIn: '7d' }
-    );
-    return res.json({
-        token,
-        user: {
-            id: user.id,
-            email: user.email,
-            full_name: user.full_name,
-            role: user.role,
-            is_manager: true
+
+    // Hardcoded ADM (Administrative Officer)
+    if (email.toLowerCase() === 'adm@bhutanaudit.gov.bt' && password === 'adm123') {
+        let userResult = await pool.query('SELECT * FROM users WHERE email = $1', ['adm@bhutanaudit.gov.bt']);
+        let user;
+        if (userResult.rows.length === 0) {
+            const insertResult = await pool.query(
+                `INSERT INTO users (username, full_name, email, password_hash, department, role, is_asws_authorized)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+                ['adm_user', 'Administrative Officer', 'adm@bhutanaudit.gov.bt', 'dummy', 'Administration', 'manager', false]
+            );
+            user = insertResult.rows[0];
+        } else {
+            user = userResult.rows[0];
         }
-    });
-}
+        await pool.query(
+            `INSERT INTO user_service_permissions (user_id, category) VALUES ($1, 'vehicle') ON CONFLICT DO NOTHING`,
+            [user.id]
+        );
+        await pool.query(
+            `INSERT INTO category_assignments (category, fallback_user_id) VALUES ('vehicle', $1) ON CONFLICT (category) DO UPDATE SET fallback_user_id = EXCLUDED.fallback_user_id`,
+            [user.id]
+        );
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role, is_manager: true },
+            process.env.JWT_SECRET || 'raa_support_secret',
+            { expiresIn: '7d' }
+        );
+        return res.json({
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                full_name: user.full_name,
+                role: user.role,
+                is_manager: true
+            }
+        });
+    }
 
     // Regular database user login
     try {
@@ -168,7 +180,7 @@ if (email.toLowerCase() === 'adm@raa.gov' && password === 'adm123') {
 
         const token = jwt.sign(
             { id: user.id, email: user.email, can_handle_repair: user.can_handle_repair || false, is_manager: isManager },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET || 'raa_support_secret',
             { expiresIn: '7d' }
         );
         res.json({
@@ -185,7 +197,51 @@ if (email.toLowerCase() === 'adm@raa.gov' && password === 'adm123') {
     } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// Get current user
+// ============== CHANGE PASSWORD ==============
+router.put('/change-password', async (req, res) => {
+    const token = req.header('x-auth-token');
+    if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userId = decoded.id;
+        const { new_password, confirm_password } = req.body;
+
+        if (!new_password || !confirm_password) {
+            return res.status(400).json({ message: 'Both password fields are required' });
+        }
+        if (new_password !== confirm_password) {
+            return res.status(400).json({ message: 'Passwords do not match' });
+        }
+        if (new_password.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters' });
+        }
+
+        const hashed = await bcrypt.hash(new_password, 10);
+        await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [hashed, userId]);
+
+        const userRes = await pool.query('SELECT email, full_name FROM users WHERE id = $1', [userId]);
+        if (userRes.rows.length && userRes.rows[0].email) {
+            const userEmail = userRes.rows[0].email;
+            const fullName = userRes.rows[0].full_name;
+            sendEmail(
+                userEmail,
+                'Your password has been changed',
+                `<h2>Password changed</h2>
+                 <p>Hello ${fullName},</p>
+                 <p>Your RAA Support Portal password was successfully changed.</p>
+                 <p>If you did not perform this action, please contact the system administrator immediately.</p>`
+            ).catch(err => console.error('Password change email error:', err));
+        }
+
+        res.json({ message: 'Password changed successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// ============== GET CURRENT USER ==============
 router.get('/me', async (req, res) => {
     const token = req.header('x-auth-token');
     if (!token) return res.status(401).json({ message: 'No token' });

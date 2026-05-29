@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
             [userId]
         );
         const managedCategories = perms.rows.map(row => row.category);
-        console.log(`User ${userId} manages categories:`, managedCategories);
+        // console.log(`User ${userId} manages categories:`, managedCategories); // REMOVED to stop console spam
 
         let result;
         if (managedCategories.length > 0) {
@@ -299,6 +299,75 @@ router.put('/:id/approve', async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
+});
+
+// PUT /api/requests/:id/formdata – update form_data (for allocation, etc.)
+router.put('/:id/formdata', async (req, res) => {
+    const userId = getUserIdFromToken(req);
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const requestId = parseInt(req.params.id);
+    const { form_data } = req.body;
+    if (!form_data) return res.status(400).json({ message: 'form_data required' });
+
+    try {
+        const ticket = await pool.query('SELECT category FROM service_requests WHERE id = $1', [requestId]);
+        if (ticket.rows.length === 0) return res.status(404).json({ message: 'Not found' });
+        const perms = await pool.query(
+            'SELECT category FROM user_service_permissions WHERE user_id = $1 AND category = $2',
+            [userId, ticket.rows[0].category]
+        );
+        const isManager = perms.rows.length > 0;
+        if (!isManager) {
+            return res.status(403).json({ message: 'Only managers can update form_data' });
+        }
+
+        await pool.query(
+            `UPDATE service_requests SET form_data = $1, updated_at = NOW() WHERE id = $2`,
+            [form_data, requestId]
+        );
+        res.json({ message: 'Form data updated' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// PUT /api/requests/:id
+router.put('/:id', async (req, res) => {
+    const userId = getUserIdFromToken(req);
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const requestId = parseInt(req.params.id);
+    const { title, description } = req.body;
+
+    try {
+        const ticket = await pool.query('SELECT created_by, status FROM service_requests WHERE id = $1', [requestId]);
+        if (ticket.rows.length === 0) return res.status(404).json({ message: 'Not found' });
+        if (ticket.rows[0].created_by !== userId) return res.status(403).json({ message: 'Not your ticket' });
+        if (ticket.rows[0].status !== 'pending_approval') {
+            return res.status(400).json({ message: 'Only pending tickets can be edited' });
+        }
+        await pool.query('UPDATE service_requests SET title = $1, description = $2, updated_at = NOW() WHERE id = $3', [title, description, requestId]);
+        res.json({ message: 'Updated' });
+    } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// DELETE /api/requests/:id
+router.delete('/:id', async (req, res) => {
+    const userId = getUserIdFromToken(req);
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const requestId = parseInt(req.params.id);
+    try {
+        const ticket = await pool.query('SELECT created_by, status FROM service_requests WHERE id = $1', [requestId]);
+        if (ticket.rows.length === 0) return res.status(404).json({ message: 'Not found' });
+        if (ticket.rows[0].created_by !== userId) return res.status(403).json({ message: 'Not your ticket' });
+        if (ticket.rows[0].status !== 'pending_approval') {
+            return res.status(400).json({ message: 'Only pending tickets can be deleted' });
+        }
+        await pool.query('DELETE FROM service_requests WHERE id = $1', [requestId]);
+        res.json({ message: 'Deleted' });
+    } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
 module.exports = router;

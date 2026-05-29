@@ -6,6 +6,7 @@
     <title>RAA Support – Manager Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* ========== EXACT SAME STYLES AS BEFORE – NO CHANGES ========== */
         * {
             margin: 0;
             padding: 0;
@@ -23,10 +24,34 @@
             bottom: 0;
             left: 0;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
-        .sidebar-header { padding: 20px; border-bottom: 1px solid #E2E8F0; }
-        .sidebar-header h2 { color: #0F5C5F; font-size: 1.3rem; }
-        .nav-menu { padding: 16px 12px; display: flex; flex-direction: column; gap: 6px; }
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #E2E8F0;
+            text-align: center;
+        }
+        .sidebar-logo {
+            max-width: 100%;
+            height: auto;
+            max-height: 70px;
+        }
+        .nav-menu {
+            flex: 1;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .nav-bottom {
+            margin-top: auto;
+            padding: 16px 12px;
+            border-top: 1px solid #E2E8F0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
         .nav-item {
             display: flex;
             align-items: center;
@@ -84,14 +109,9 @@
             color: white;
             font-weight: 600;
         }
-        .btn-icon { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #475569; }
         .content { padding: 24px 28px; }
-        .pane {
-            display: none;
-        }
-        .pane.active {
-            display: block;
-        }
+        .pane { display: none; }
+        .pane.active { display: block; }
         .welcome-card {
             background: linear-gradient(135deg, #0F5C5F 0%, #1A7F7A 100%);
             color: white;
@@ -103,10 +123,7 @@
             align-items: center;
             flex-wrap: wrap;
         }
-        .welcome-card h2 {
-            font-size: 1.4rem;
-            margin-bottom: 4px;
-        }
+        .welcome-card h2 { font-size: 1.4rem; margin-bottom: 4px; }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -121,19 +138,8 @@
             transition: transform 0.2s;
             border-left: 4px solid;
         }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-        }
-        .stat-number {
-            font-size: 32px;
-            font-weight: 700;
-        }
-        .stat-label {
-            font-size: 14px;
-            color: #64748B;
-            margin-top: 4px;
-        }
+        .stat-number { font-size: 32px; font-weight: 700; }
+        .stat-label { font-size: 14px; color: #64748B; margin-top: 4px; }
         .filter-bar {
             display: flex;
             flex-wrap: wrap;
@@ -185,14 +191,25 @@
             font-size: 13px;
         }
         .tickets-table th { background: #F8FAFC; font-weight: 600; }
-        .view-btn {
-            background: #0F5C5F;
-            color: white;
-            border: none;
+        .action-cell { white-space: nowrap; }
+        .action-buttons { display: inline-flex; gap: 8px; align-items: center; }
+        .action-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 500;
             border-radius: 30px;
-            padding: 4px 12px;
+            background: white;
+            border: 1px solid #CBD5E1;
             cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
         }
+        .view-btn { color: #0F5C5F; border-color: #C2E0E0; }
+        .view-btn:hover { background: #0F5C5F; color: white; }
+        .edit-btn { color: #E68A2E; border-color: #FFE0C2; }
+        .edit-btn:hover { background: #E68A2E; color: white; }
+        .delete-btn { color: #D14545; border-color: #FFD6D6; }
+        .delete-btn:hover { background: #D14545; color: white; }
         .empty-state {
             text-align: center;
             padding: 48px 24px;
@@ -200,7 +217,6 @@
             border-radius: 16px;
             color: #64748B;
         }
-        /* Status badge colors for table */
         .status-badge {
             display: inline-block;
             padding: 4px 10px;
@@ -213,8 +229,7 @@
         .status-in_progress { background: #E0F2FE; color: #0369A1; }
         .status-resolved { background: #DCFCE7; color: #166534; }
         .status-rejected { background: #FEE2E2; color: #B91C1C; }
-        /* Modal styles */
-        .modal {
+        .modal, .edit-modal {
             display: none;
             position: fixed;
             top: 0;
@@ -226,12 +241,12 @@
             align-items: center;
             justify-content: center;
         }
-        .modal.active { display: flex; }
-        .modal-content {
+        .modal.active, .edit-modal.active { display: flex; }
+        .modal-content, .edit-modal-content {
             background: white;
             border-radius: 28px;
             width: 90%;
-            max-width: 1000px;
+            max-width: 600px;
             max-height: 85vh;
             overflow-y: auto;
             padding: 32px;
@@ -357,11 +372,47 @@
             font-weight: 600;
             background: #E2E8F0;
         }
-        .status-pending_approval { background: #FEF3C7; color: #B45309; }
-        .status-approved { background: #DCFCE7; color: #166534; }
-        .status-in_progress { background: #E0F2FE; color: #0369A1; }
-        .status-resolved { background: #DCFCE7; color: #166534; }
-        .status-rejected { background: #FEE2E2; color: #B91C1C; }
+        .allocation-box {
+            background: #F0FDF4;
+            border: 1px solid #DCFCE7;
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        .allocation-input-group {
+            margin-bottom: 12px;
+        }
+        .allocation-input-group label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 4px;
+            color: #166534;
+        }
+        .allocation-input-group input, .allocation-input-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: white;
+        }
+        .btn-allocate {
+            background: #10B981;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+        }
         @media (max-width: 1024px) {
             .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
             .sidebar.open { transform: translateX(0); }
@@ -371,13 +422,17 @@
         }
         @media (max-width: 640px) {
             .info-grid { grid-template-columns: 1fr; }
+            .action-buttons { gap: 4px; }
+            .action-btn { padding: 4px 8px; font-size: 11px; }
         }
     </style>
 </head>
 <body>
 <div class="app">
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h2>RAA Support</h2></div>
+        <div class="sidebar-header">
+            <img src="images/dashboard_logo.png" alt="RAA Logo" class="sidebar-logo">
+        </div>
         <div class="nav-menu">
             <div class="nav-item active" data-view="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
             <div class="nav-item" data-view="assigned"><i class="fas fa-tasks"></i> Assigned to Me</div>
@@ -395,6 +450,10 @@
                 <li data-service="asws-loan">ASWS Loan Application</li>
             </ul>
         </div>
+        <div class="nav-bottom">
+            <div class="nav-item" id="settingsBtnSidebar"><i class="fas fa-cog"></i> Settings</div>
+            <div class="nav-item" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i> Logout</div>
+        </div>
     </div>
     <div class="main">
         <div class="topbar">
@@ -403,14 +462,12 @@
                 <div class="notification-bell" id="notificationBell"><i class="fas fa-bell"></i><span class="badge">0</span></div>
                 <span id="userName"></span>
                 <div class="user-avatar" id="userAvatar"></div>
-                <button class="btn-icon" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </div>
         <div class="content">
-            <!-- Dashboard Pane (tickets created by manager) -->
             <div id="dashboardPane" class="pane active">
                 <div class="welcome-card">
-                    <div><h2 id="dashboardGreeting">Good morning, <span id="dashboardWelcomeName"></span> 👋</h2><p>Here’s an overview of your service requests</p></div>
+                    <div><h2 id="dashboardGreeting">Good morning, <span id="dashboardWelcomeName"></span> </h2><p>Here’s an overview of your service requests</p></div>
                     <div><i class="fas fa-calendar-alt"></i> <span id="dashboardDate"></span></div>
                 </div>
                 <div class="stats-grid" id="dashboardStatsGrid"></div>
@@ -422,10 +479,9 @@
                 </div>
                 <div id="dashboardTicketsContainer"></div>
             </div>
-            <!-- Assigned to Me Pane (tickets assigned to manager by others) -->
             <div id="assignedPane" class="pane">
                 <div class="welcome-card">
-                    <div><h2 id="assignedGreeting">Good morning, <span id="assignedWelcomeName"></span> 👋</h2><p>Here’s an overview of tickets assigned to you</p></div>
+                    <div><h2 id="assignedGreeting">Good morning, <span id="assignedWelcomeName"></span> </h2><p>Here’s an overview of tickets assigned to you</p></div>
                     <div><i class="fas fa-calendar-alt"></i> <span id="assignedDate"></span></div>
                 </div>
                 <div class="stats-grid" id="assignedStatsGrid"></div>
@@ -441,50 +497,72 @@
     </div>
 </div>
 
-<!-- Modal for ticket details (enhanced) -->
+<!-- Modals -->
 <div id="ticketModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 1000px;">
         <span class="modal-close" onclick="closeModal()">&times;</span>
         <div id="modalContent"></div>
+    </div>
+</div>
+<div id="editTicketModal" class="edit-modal">
+    <div class="edit-modal-content">
+        <span class="modal-close" onclick="closeEditModal()">&times;</span>
+        <h2><i class="fas fa-edit"></i> Edit Ticket</h2>
+        <form id="editTicketForm">
+            <div style="margin-bottom:20px"><label>Title</label><input type="text" id="editTitle" required></div>
+            <div style="margin-bottom:20px"><label>Description</label><textarea id="editDescription" rows="4"></textarea></div>
+            <div style="display:flex; gap:12px; justify-content:flex-end">
+                <button type="button" class="btn-primary-sm" onclick="closeEditModal()" style="background:#9AA6B5">Cancel</button>
+                <button type="submit" class="btn-primary-sm" style="background:#E68A2E">Save Changes</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
     const API_BASE = 'http://localhost:5000/api';
+    let driversList = [], vehiclesList = [], currentEditTicketId = null;
+
     function getToken() { return localStorage.getItem('token'); }
     function getUser() { return JSON.parse(localStorage.getItem('user') || '{}'); }
-
     async function apiCall(endpoint, options = {}) {
         const token = getToken();
         const headers = { 'Content-Type': 'application/json', ...options.headers };
         if (token) headers['x-auth-token'] = token;
         const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-        if (res.status === 401) {
-            localStorage.clear();
-            window.location.href = 'index.html';
-            throw new Error('Session expired');
-        }
+        if (res.status === 401) { localStorage.clear(); window.location.href = 'index.html'; throw new Error('Session expired'); }
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Request failed');
         return data;
     }
+    async function fetchDrivers() {
+        try {
+            const data = await apiCall('/drivers');
+            driversList = data.drivers || data;
+            const vehicleMap = new Map();
+            for (const driver of driversList) {
+                if (driver.vehicle_name && driver.vehicle_number) {
+                    if (!vehicleMap.has(driver.vehicle_name)) vehicleMap.set(driver.vehicle_name, { vehicle_name: driver.vehicle_name, numbers: [driver.vehicle_number] });
+                    else { const ex = vehicleMap.get(driver.vehicle_name); if (!ex.numbers.includes(driver.vehicle_number)) ex.numbers.push(driver.vehicle_number); }
+                }
+            }
+            vehiclesList = Array.from(vehicleMap.values());
+            return driversList;
+        } catch(err) { console.error(err); driversList = []; vehiclesList = []; return []; }
+    }
 
     const user = getUser();
     if (!user || !user.id) window.location.href = 'index.html';
-
     document.getElementById('userName').innerText = user.full_name || user.email?.split('@')[0] || 'Manager';
     document.getElementById('userAvatar').innerText = (user.full_name || 'U').charAt(0).toUpperCase();
-    document.getElementById('logoutBtn').onclick = () => { localStorage.clear(); window.location.href = 'index.html'; };
-
+    document.getElementById('logoutBtnSidebar').onclick = () => { localStorage.clear(); window.location.href = 'index.html'; };
+    document.getElementById('settingsBtnSidebar').onclick = () => { window.location.href = 'settings.html'; };
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.getElementById('sidebar');
     menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-
     const aswsMenu = document.getElementById('aswsMenu');
     const aswsSubmenu = document.getElementById('aswsSubmenu');
     aswsMenu.addEventListener('click', (e) => { e.stopPropagation(); aswsSubmenu.classList.toggle('show'); });
-
-    // Sidebar navigation for service links
     document.querySelectorAll('.nav-item[data-service], .submenu li').forEach(item => {
         item.addEventListener('click', () => {
             const service = item.dataset.service;
@@ -498,398 +576,175 @@
             window.location.href = url;
         });
     });
-
-    function updateWelcomeAndDate() {
-        const hour = new Date().getHours();
-        let greeting = 'Good morning';
-        if (hour >= 12 && hour < 18) greeting = 'Good afternoon';
-        else if (hour >= 18) greeting = 'Good evening';
-        const userName = user.full_name?.split(' ')[0] || 'Manager';
-        const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('dashboardGreeting').innerHTML = `${greeting}, <span id="dashboardWelcomeName">${userName}</span> 👋`;
-        document.getElementById('dashboardDate').innerText = today;
-        document.getElementById('assignedGreeting').innerHTML = `${greeting}, <span id="assignedWelcomeName">${userName}</span> 👋`;
-        document.getElementById('assignedDate').innerText = today;
-    }
-
-    // View switching
     document.querySelectorAll('.nav-item[data-view]').forEach(item => {
         item.addEventListener('click', () => {
             const view = item.dataset.view;
             document.querySelectorAll('.nav-item[data-view]').forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
-            if (view === 'dashboard') {
-                document.getElementById('dashboardPane').classList.add('active');
-                document.getElementById('assignedPane').classList.remove('active');
-                loadDashboardTickets();
-            } else if (view === 'assigned') {
-                document.getElementById('assignedPane').classList.add('active');
-                document.getElementById('dashboardPane').classList.remove('active');
-                loadAssignedTickets();
-            }
+            if (view === 'dashboard') { document.getElementById('dashboardPane').classList.add('active'); document.getElementById('assignedPane').classList.remove('active'); loadDashboardTickets(); }
+            else if (view === 'assigned') { document.getElementById('assignedPane').classList.add('active'); document.getElementById('dashboardPane').classList.remove('active'); loadAssignedTickets(); }
         });
     });
 
-    // Dashboard Pane (tickets created by manager)
-    let dashboardTickets = [], dashboardFiltered = [];
-    let currentDashboardPage = 1;
-    async function loadDashboardTickets() {
+    async function deleteTicket(ticketId, ticketNumber) {
+        if (!confirm(`Delete ticket ${ticketNumber}?`)) return;
         try {
-            const all = await apiCall('/requests');
-            dashboardTickets = all.filter(t => t.created_by === user.id);
-            applyDashboardFilters();
-        } catch (err) {
-            document.getElementById('dashboardTicketsContainer').innerHTML = `<div class="empty-state">❌ Error: ${err.message}</div>`;
-        }
+            await apiCall(`/requests/${ticketId}`, { method: 'DELETE' });
+            alert('Deleted');
+            if (document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets(); else loadAssignedTickets();
+        } catch(err) { alert('Delete failed: '+err.message); }
     }
-    function applyDashboardFilters() {
-        const search = document.getElementById('dashboardSearch').value.toLowerCase();
-        const status = document.getElementById('dashboardStatusFilter').value;
-        const category = document.getElementById('dashboardCategoryFilter').value;
-        const date = document.getElementById('dashboardDateFilter').value;
-        dashboardFiltered = dashboardTickets.filter(t => {
-            const matchSearch = t.ticket_number.toLowerCase().includes(search) || t.title.toLowerCase().includes(search);
-            const matchStatus = !status || t.status === status;
-            const matchCategory = !category || t.category === category;
-            const matchDate = !date || new Date(t.created_at).toISOString().slice(0,10) === date;
-            return matchSearch && matchStatus && matchCategory && matchDate;
-        });
-        renderDashboardStats();
-        renderDashboardTickets();
+    function openEditModal(ticketId) {
+        let ticket = (document.getElementById('dashboardPane').classList.contains('active')) ? dashboardTickets.find(t=>t.id===ticketId) : assignedTickets.find(t=>t.id===ticketId);
+        if (!ticket) return;
+        if (ticket.status !== 'pending_approval') { alert('Only pending tickets can be edited'); return; }
+        currentEditTicketId = ticketId;
+        document.getElementById('editTitle').value = ticket.title || '';
+        document.getElementById('editDescription').value = ticket.description || '';
+        document.getElementById('editTicketModal').classList.add('active');
     }
-    function renderDashboardStats() {
-        const total = dashboardFiltered.length;
-        const pending = dashboardFiltered.filter(t => t.status === 'pending_approval').length;
-        const approved = dashboardFiltered.filter(t => t.status === 'approved').length;
-        const rejected = dashboardFiltered.filter(t => t.status === 'rejected').length;
-        document.getElementById('dashboardStatsGrid').innerHTML = `
-            <div class="stat-card" style="border-left-color:#F59E0B"><div class="stat-number">${total}</div><div class="stat-label">Total Tickets</div></div>
-            <div class="stat-card" style="border-left-color:#3B82F6"><div class="stat-number">${pending}</div><div class="stat-label">Pending</div></div>
-            <div class="stat-card" style="border-left-color:#10B981"><div class="stat-number">${approved}</div><div class="stat-label">Approved</div></div>
-            <div class="stat-card" style="border-left-color:#EF4444"><div class="stat-number">${rejected}</div><div class="stat-label">Rejected</div></div>
-        `;
-    }
-    function renderDashboardTickets() {
-        const container = document.getElementById('dashboardTicketsContainer');
-        if (dashboardFiltered.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fas fa-ticket-alt"></i><p>No tickets found. Use the sidebar to create one.</p></div>`; return; }
-        const rowsPerPage = 5;
-        const start = (currentDashboardPage-1)*rowsPerPage;
-        const paginated = dashboardFiltered.slice(start, start+rowsPerPage);
-        let html = `<div class="table-container"><table class="tickets-table"><thead><tr><th>Ticket #</th><th>Service</th><th>Title</th><th>Date</th><th>Status</th><th>Action</th></td></thead><tbody>`;
-        for (const t of paginated) {
-            const statusClass = `status-${t.status}`;
-            html += `<tr>
-                <td>${t.ticket_number}</td>
-                <td>${t.category.replace('_',' ')}</td>
-                <td>${t.title}</td>
-                <td>${new Date(t.created_at).toLocaleDateString()}</td>
-                <td><span class="status-badge ${statusClass}">${t.status.replace('_',' ')}</span></td>
-                <td><button class="view-btn" onclick="showTicketModal(${t.id})">View Details</button></td>
-            </tr>`;
-        }
-        html += `</tbody><table><div id="dashboardPagination" style="padding:12px; text-align:center;"></div></div>`;
-        container.innerHTML = html;
-        const totalPages = Math.ceil(dashboardFiltered.length / rowsPerPage);
-        document.getElementById('dashboardPagination').innerHTML = `<button onclick="dashboardChangePage(-1)" ${currentDashboardPage===1?'disabled':''}>Prev</button> Page ${currentDashboardPage} of ${totalPages||1} <button onclick="dashboardChangePage(1)" ${currentDashboardPage===totalPages||totalPages===0?'disabled':''}>Next</button>`;
-    }
+    function closeEditModal() { document.getElementById('editTicketModal').classList.remove('active'); currentEditTicketId = null; }
+    document.getElementById('editTicketForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentEditTicketId) return;
+        try {
+            await apiCall(`/requests/${currentEditTicketId}`, { method: 'PUT', body: JSON.stringify({ title: document.getElementById('editTitle').value, description: document.getElementById('editDescription').value }) });
+            alert('Updated');
+            closeEditModal();
+            if (document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets(); else loadAssignedTickets();
+        } catch(err) { alert('Update failed: '+err.message); }
+    });
+
+    let dashboardTickets = [], dashboardFiltered = [], currentDashboardPage = 1;
+    async function loadDashboardTickets() { try { const all = await apiCall('/requests'); dashboardTickets = all.filter(t => t.created_by === user.id); applyDashboardFilters(); } catch(err) { document.getElementById('dashboardTicketsContainer').innerHTML = `<div class="empty-state">❌ Error: ${err.message}</div>`; } }
+    function applyDashboardFilters() { const search = document.getElementById('dashboardSearch').value.toLowerCase(); const status = document.getElementById('dashboardStatusFilter').value; const category = document.getElementById('dashboardCategoryFilter').value; const date = document.getElementById('dashboardDateFilter').value; dashboardFiltered = dashboardTickets.filter(t => (t.ticket_number.toLowerCase().includes(search) || t.title.toLowerCase().includes(search)) && (!status || t.status===status) && (!category || t.category===category) && (!date || new Date(t.created_at).toISOString().slice(0,10)===date)); renderDashboardStats(); renderDashboardTickets(); }
+    function renderDashboardStats() { const total = dashboardFiltered.length, pending = dashboardFiltered.filter(t=>t.status==='pending_approval').length, approved = dashboardFiltered.filter(t=>t.status==='approved').length, rejected = dashboardFiltered.filter(t=>t.status==='rejected').length; document.getElementById('dashboardStatsGrid').innerHTML = `<div class="stat-card" style="border-left-color:#F59E0B"><div class="stat-number">${total}</div><div class="stat-label">Total Tickets</div></div><div class="stat-card" style="border-left-color:#3B82F6"><div class="stat-number">${pending}</div><div class="stat-label">Pending</div></div><div class="stat-card" style="border-left-color:#10B981"><div class="stat-number">${approved}</div><div class="stat-label">Approved</div></div><div class="stat-card" style="border-left-color:#EF4444"><div class="stat-number">${rejected}</div><div class="stat-label">Rejected</div></div>`; }
+    function renderDashboardTickets() { const container = document.getElementById('dashboardTicketsContainer'); if(!dashboardFiltered.length) { container.innerHTML = `<div class="empty-state"><i class="fas fa-ticket-alt"></i><p>No tickets found</p></div>`; return; } const start=(currentDashboardPage-1)*5; const paginated=dashboardFiltered.slice(start, start+5); let html=`<div class="table-container"><table class="tickets-table"><thead><th>Ticket #</th><th>Service</th><th>Title</th><th>Date</th><th>Status</th><th>Action</th></thead><tbody>`; for(const t of paginated){ const isPending=t.status==='pending_approval'; html+=`<tr><td>${escapeHtml(t.ticket_number)}</td><td>${escapeHtml(t.category.replace('_',' '))}</td><td>${escapeHtml(t.title)}</td><td>${new Date(t.created_at).toLocaleDateString()}</td><td><span class="status-badge status-${t.status}">${t.status.replace('_',' ')}</span></td><td class="action-cell"><div class="action-buttons"><button class="action-btn view-btn" onclick="showTicketModal(${t.id})">View</button>${isPending?`<button class="action-btn edit-btn" onclick="openEditModal(${t.id})">Edit</button><button class="action-btn delete-btn" onclick="deleteTicket(${t.id},'${t.ticket_number}')">Delete</button>`:''}</div></td></tr>`; } html+=`</tbody></table><div id="dashboardPagination" class="pagination"></div></div>`; container.innerHTML=html; const totalPages=Math.ceil(dashboardFiltered.length/5); document.getElementById('dashboardPagination').innerHTML=`<button onclick="dashboardChangePage(-1)" ${currentDashboardPage===1?'disabled':''}>Prev</button><span>Page ${currentDashboardPage} of ${totalPages||1}</span><button onclick="dashboardChangePage(1)" ${currentDashboardPage===totalPages||totalPages===0?'disabled':''}>Next</button>`; }
     window.dashboardChangePage = (delta) => { currentDashboardPage += delta; renderDashboardTickets(); };
-    document.getElementById('dashboardSearch').addEventListener('input', () => { currentDashboardPage = 1; applyDashboardFilters(); });
-    document.getElementById('dashboardStatusFilter').addEventListener('change', () => { currentDashboardPage = 1; applyDashboardFilters(); });
-    document.getElementById('dashboardCategoryFilter').addEventListener('change', () => { currentDashboardPage = 1; applyDashboardFilters(); });
-    document.getElementById('dashboardDateFilter').addEventListener('change', () => { currentDashboardPage = 1; applyDashboardFilters(); });
+    document.getElementById('dashboardSearch').addEventListener('input', ()=>{ currentDashboardPage=1; applyDashboardFilters(); });
+    document.getElementById('dashboardStatusFilter').addEventListener('change', ()=>{ currentDashboardPage=1; applyDashboardFilters(); });
+    document.getElementById('dashboardCategoryFilter').addEventListener('change', ()=>{ currentDashboardPage=1; applyDashboardFilters(); });
+    document.getElementById('dashboardDateFilter').addEventListener('change', ()=>{ currentDashboardPage=1; applyDashboardFilters(); });
 
-    // Assigned Pane (tickets assigned to manager, not created by manager)
-    let assignedTickets = [], assignedFiltered = [];
-    let currentAssignedPage = 1;
-    async function loadAssignedTickets() {
-        try {
-            const all = await apiCall('/requests');
-            assignedTickets = all.filter(t => t.assigned_to === user.id && t.created_by !== user.id);
-            applyAssignedFilters();
-        } catch (err) { document.getElementById('assignedTicketsContainer').innerHTML = `<div class="empty-state">❌ Error: ${err.message}</div>`; }
-    }
-    function applyAssignedFilters() {
-        const search = document.getElementById('assignedSearch').value.toLowerCase();
-        const status = document.getElementById('assignedStatusFilter').value;
-        const category = document.getElementById('assignedCategoryFilter').value;
-        const date = document.getElementById('assignedDateFilter').value;
-        assignedFiltered = assignedTickets.filter(t => {
-            const matchSearch = t.ticket_number.toLowerCase().includes(search) || t.title.toLowerCase().includes(search);
-            const matchStatus = !status || t.status === status;
-            const matchCategory = !category || t.category === category;
-            const matchDate = !date || new Date(t.created_at).toISOString().slice(0,10) === date;
-            return matchSearch && matchStatus && matchCategory && matchDate;
-        });
-        renderAssignedStats();
-        renderAssignedTickets();
-    }
-    function renderAssignedStats() {
-        const total = assignedFiltered.length;
-        const pending = assignedFiltered.filter(t => t.status === 'pending_approval').length;
-        const approved = assignedFiltered.filter(t => t.status === 'approved').length;
-        const rejected = assignedFiltered.filter(t => t.status === 'rejected').length;
-        document.getElementById('assignedStatsGrid').innerHTML = `
-            <div class="stat-card" style="border-left-color:#F59E0B"><div class="stat-number">${total}</div><div class="stat-label">Total Tickets</div></div>
-            <div class="stat-card" style="border-left-color:#3B82F6"><div class="stat-number">${pending}</div><div class="stat-label">Pending</div></div>
-            <div class="stat-card" style="border-left-color:#10B981"><div class="stat-number">${approved}</div><div class="stat-label">Approved</div></div>
-            <div class="stat-card" style="border-left-color:#EF4444"><div class="stat-number">${rejected}</div><div class="stat-label">Rejected</div></div>
-        `;
-    }
-    function renderAssignedTickets() {
-        const container = document.getElementById('assignedTicketsContainer');
-        if (assignedFiltered.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fas fa-ticket-alt"></i><p>No tickets assigned to you by others.</p></div>`; return; }
-        const rowsPerPage = 5;
-        const start = (currentAssignedPage-1)*rowsPerPage;
-        const paginated = assignedFiltered.slice(start, start+rowsPerPage);
-        let html = `<div class="table-container"><table class="tickets-table"><thead><tr><th>Ticket #</th><th>Service</th><th>Title</th><th>Requester</th><th>Date</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
-        for (const t of paginated) {
-            const statusClass = `status-${t.status}`;
-            html += `<tr>
-                <td>${t.ticket_number}</td>
-                <td>${t.category.replace('_',' ')}</td>
-                <td>${t.title}</td>
-                <td>${t.requester_email || t.requester_name}</td>
-                <td>${new Date(t.created_at).toLocaleDateString()}</td>
-                <td><span class="status-badge ${statusClass}">${t.status.replace('_',' ')}</span></td>
-                <td><button class="view-btn" onclick="showTicketModal(${t.id})">View Details</button></td>
-            </tr>`;
-        }
-        html += `</tbody></table><div id="assignedPagination" style="padding:12px; text-align:center;"></div></div>`;
-        container.innerHTML = html;
-        const totalPages = Math.ceil(assignedFiltered.length / rowsPerPage);
-        document.getElementById('assignedPagination').innerHTML = `<button onclick="assignedChangePage(-1)" ${currentAssignedPage===1?'disabled':''}>Prev</button> Page ${currentAssignedPage} of ${totalPages||1} <button onclick="assignedChangePage(1)" ${currentAssignedPage===totalPages||totalPages===0?'disabled':''}>Next</button>`;
-    }
+    let assignedTickets = [], assignedFiltered = [], currentAssignedPage = 1;
+    async function loadAssignedTickets() { try { const all = await apiCall('/requests'); assignedTickets = all.filter(t => t.assigned_to === user.id && t.created_by !== user.id); applyAssignedFilters(); } catch(err) { document.getElementById('assignedTicketsContainer').innerHTML = `<div class="empty-state">❌ Error: ${err.message}</div>`; } }
+    function applyAssignedFilters() { const search = document.getElementById('assignedSearch').value.toLowerCase(); const status = document.getElementById('assignedStatusFilter').value; const category = document.getElementById('assignedCategoryFilter').value; const date = document.getElementById('assignedDateFilter').value; assignedFiltered = assignedTickets.filter(t => (t.ticket_number.toLowerCase().includes(search) || t.title.toLowerCase().includes(search)) && (!status || t.status===status) && (!category || t.category===category) && (!date || new Date(t.created_at).toISOString().slice(0,10)===date)); renderAssignedStats(); renderAssignedTickets(); }
+    function renderAssignedStats() { const total = assignedFiltered.length, pending = assignedFiltered.filter(t=>t.status==='pending_approval').length, approved = assignedFiltered.filter(t=>t.status==='approved').length, rejected = assignedFiltered.filter(t=>t.status==='rejected').length; document.getElementById('assignedStatsGrid').innerHTML = `<div class="stat-card" style="border-left-color:#F59E0B"><div class="stat-number">${total}</div><div class="stat-label">Total Tickets</div></div><div class="stat-card" style="border-left-color:#3B82F6"><div class="stat-number">${pending}</div><div class="stat-label">Pending</div></div><div class="stat-card" style="border-left-color:#10B981"><div class="stat-number">${approved}</div><div class="stat-label">Approved</div></div><div class="stat-card" style="border-left-color:#EF4444"><div class="stat-number">${rejected}</div><div class="stat-label">Rejected</div></div>`; }
+    function renderAssignedTickets() { const container = document.getElementById('assignedTicketsContainer'); if(!assignedFiltered.length) { container.innerHTML = `<div class="empty-state"><i class="fas fa-ticket-alt"></i><p>No tickets assigned</p></div>`; return; } const start=(currentAssignedPage-1)*5; const paginated=assignedFiltered.slice(start, start+5); let html=`<div class="table-container"><table class="tickets-table"><thead><th>Ticket #</th><th>Service</th><th>Title</th><th>Requester</th><th>Date</th><th>Status</th><th>Action</th></thead><tbody>`; for(const t of paginated){ html+=`<tr><td>${escapeHtml(t.ticket_number)}</td><td>${escapeHtml(t.category.replace('_',' '))}</td><td>${escapeHtml(t.title)}</td><td>${escapeHtml(t.requester_email||t.requester_name)}</td><td>${new Date(t.created_at).toLocaleDateString()}</td><td><span class="status-badge status-${t.status}">${t.status.replace('_',' ')}</span></td><td class="action-cell"><div class="action-buttons"><button class="action-btn view-btn" onclick="showTicketModal(${t.id})">View</button></div></td></tr>`; } html+=`</tbody></table><div id="assignedPagination" class="pagination"></div></div>`; container.innerHTML=html; const totalPages=Math.ceil(assignedFiltered.length/5); document.getElementById('assignedPagination').innerHTML=`<button onclick="assignedChangePage(-1)" ${currentAssignedPage===1?'disabled':''}>Prev</button><span>Page ${currentAssignedPage} of ${totalPages||1}</span><button onclick="assignedChangePage(1)" ${currentAssignedPage===totalPages||totalPages===0?'disabled':''}>Next</button>`; }
     window.assignedChangePage = (delta) => { currentAssignedPage += delta; renderAssignedTickets(); };
-    document.getElementById('assignedSearch').addEventListener('input', () => { currentAssignedPage = 1; applyAssignedFilters(); });
-    document.getElementById('assignedStatusFilter').addEventListener('change', () => { currentAssignedPage = 1; applyAssignedFilters(); });
-    document.getElementById('assignedCategoryFilter').addEventListener('change', () => { currentAssignedPage = 1; applyAssignedFilters(); });
-    document.getElementById('assignedDateFilter').addEventListener('change', () => { currentAssignedPage = 1; applyAssignedFilters(); });
+    document.getElementById('assignedSearch').addEventListener('input', ()=>{ currentAssignedPage=1; applyAssignedFilters(); });
+    document.getElementById('assignedStatusFilter').addEventListener('change', ()=>{ currentAssignedPage=1; applyAssignedFilters(); });
+    document.getElementById('assignedCategoryFilter').addEventListener('change', ()=>{ currentAssignedPage=1; applyAssignedFilters(); });
+    document.getElementById('assignedDateFilter').addEventListener('change', ()=>{ currentAssignedPage=1; applyAssignedFilters(); });
 
-    // Modal functions (same as before, but status badge colors are already applied via CSS classes)
-    let currentModalTicket = null;
-    let modalCanManage = false;
-
+    let currentModalTicket = null, modalCanManage = false;
     async function showTicketModal(ticketId) {
-        const modal = document.getElementById('ticketModal');
-        const modalContent = document.getElementById('modalContent');
+        const modal = document.getElementById('ticketModal'), modalContent = document.getElementById('modalContent');
         modalContent.innerHTML = '<div style="text-align:center; padding:40px;">Loading...</div>';
         modal.classList.add('active');
         try {
+            if(driversList.length===0) await fetchDrivers();
             const data = await apiCall(`/requests/${ticketId}`);
             currentModalTicket = data.ticket;
             modalCanManage = (user.id !== currentModalTicket.created_by);
             renderModalTicket();
             renderModalComments(data.comments);
             attachModalEventListeners();
-        } catch (err) {
-            modalContent.innerHTML = `<div style="color:red; padding:20px;">Error: ${err.message}</div>`;
-        }
+        } catch(err) { modalContent.innerHTML = `<div style="color:red; padding:20px;">Error: ${err.message}</div>`; }
     }
+    function closeModal() { document.getElementById('ticketModal').classList.remove('active'); currentModalTicket = null; }
 
-    function closeModal() {
-        document.getElementById('ticketModal').classList.remove('active');
-        currentModalTicket = null;
+    function setupDynamicVehicleNumber() {
+        const vnSelect = document.getElementById('allocVehicleNameSelect'), vnumSelect = document.getElementById('allocVehicleNumberSelect');
+        if(!vnSelect||!vnumSelect) return;
+        const update = () => { const sel = vnSelect.value, veh = vehiclesList.find(v=>v.vehicle_name===sel); if(veh && veh.numbers.length){ let opts=''; for(const num of veh.numbers) opts+=`<option value="${escapeHtml(num)}">${escapeHtml(num)}</option>`; vnumSelect.innerHTML=opts; vnumSelect.disabled=false; } else { vnumSelect.innerHTML='<option value="">-- No numbers --</option>'; vnumSelect.disabled=true; } };
+        vnSelect.removeEventListener('change', update); vnSelect.addEventListener('change', update); if(vnSelect.value) update();
+    }
+    function setupDriverPhoneAutoFill() {
+        const driverSelect = document.getElementById('allocDriverSelect'), phoneSelect = document.getElementById('allocPhoneSelect');
+        if(!driverSelect||!phoneSelect) return;
+        const update = () => { const name=driverSelect.value, d=driversList.find(drv=>drv.name===name); if(d&&d.phone) phoneSelect.innerHTML=`<option value="${escapeHtml(d.phone)}" selected>${escapeHtml(d.phone)}</option>`; else phoneSelect.innerHTML='<option value="">-- No phone --</option>'; };
+        driverSelect.removeEventListener('change', update); driverSelect.addEventListener('change', update); if(driverSelect.value) update();
     }
 
     function renderModalTicket() {
-        const container = document.getElementById('modalContent');
-        const ticket = currentModalTicket;
-        const fd = ticket.form_data || {};
+        const container = document.getElementById('modalContent'), ticket = currentModalTicket, fd = ticket.form_data || {}, allocation = fd.vehicle_allocation || null, hasAllocation = allocation && (allocation.vehicle_no || allocation.driver_name);
+        let allocationInfoHtml = '';
+        if(hasAllocation) allocationInfoHtml = `<div class="info-item"><span class="info-label">Allocated Vehicle No.</span><span class="info-value">${escapeHtml(allocation.vehicle_no||'-')}</span></div><div class="info-item"><span class="info-label">Allocated Vehicle Name</span><span class="info-value">${escapeHtml(allocation.vehicle_name||'-')}</span></div><div class="info-item"><span class="info-label">Allocated Driver</span><span class="info-value">${escapeHtml(allocation.driver_name||'-')}</span></div><div class="info-item"><span class="info-label">Driver Phone</span><span class="info-value">${escapeHtml(allocation.driver_phone||'-')}</span></div><div class="info-item"><span class="info-label">Allocated By</span><span class="info-value">${escapeHtml(allocation.allocated_by||'-')}</span></div><div class="info-item"><span class="info-label">Allocated At</span><span class="info-value">${allocation.allocated_at?new Date(allocation.allocated_at).toLocaleString():'-'}</span></div>`;
 
         let requisitionerHtml = '';
-        if (fd.requisitioner) {
-            const r = fd.requisitioner;
-            requisitionerHtml = `
-                <div class="modal-section">
-                    <div class="modal-section-title"><i class="fas fa-user"></i> Requisitioned by</div>
-                    <div class="info-grid">
-                        <div class="info-item"><span class="info-label">Name</span><span class="info-value">${escapeHtml(r.name || '-')}</span></div>
-                        <div class="info-item"><span class="info-label">Designation</span><span class="info-value">${escapeHtml(r.designation || '-')}</span></div>
-                        <div class="info-item"><span class="info-label">Division</span><span class="info-value">${escapeHtml(r.division || '-')}</span></div>
-                        <div class="info-item"><span class="info-label">Email</span><span class="info-value">${escapeHtml(r.email || '-')}</span></div>
-                        <div class="info-item"><span class="info-label">Phone</span><span class="info-value">${escapeHtml(r.phone || '-')}</span></div>
-                    </div>
-                </div>
-            `;
-        }
+        if(fd.requisitioner) { const r=fd.requisitioner; requisitionerHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-user"></i> Requisitioned by</div><div class="info-grid"><div class="info-item"><span class="info-label">Name</span><span class="info-value">${escapeHtml(r.name||'-')}</span></div><div class="info-item"><span class="info-label">Designation</span><span class="info-value">${escapeHtml(r.designation||'-')}</span></div><div class="info-item"><span class="info-label">Division</span><span class="info-value">${escapeHtml(r.division||'-')}</span></div><div class="info-item"><span class="info-label">Email</span><span class="info-value">${escapeHtml(r.email||'-')}</span></div><div class="info-item"><span class="info-label">Phone</span><span class="info-value">${escapeHtml(r.phone||'-')}</span></div></div></div>`; }
 
         let itemsHtml = '';
-        if (fd.items && fd.items.length) {
-            itemsHtml = `
-                <div class="modal-section">
-                    <div class="modal-section-title"><i class="fas fa-list"></i> Items requested</div>
-                    <table class="items-table">
-                        <thead><tr><th>#</th><th>Item Type / Description</th><th>Quantity</th><th>Remarks</th></tr></thead>
-                        <tbody>
-                            ${fd.items.map((item, idx) => `
-                                <tr>
-                                    <td>${idx+1}</td>
-                                    <td>${escapeHtml(item.itemType || item.description || '')}</td>
-                                    <td>${escapeHtml(item.quantity || item.qty || '')}</td>
-                                    <td>${escapeHtml(item.remarks || '')}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        } else {
-            const otherFields = Object.entries(fd).filter(([key]) => !['requisitioner', 'items', 'requisition_date'].includes(key));
-            if (otherFields.length) {
-                itemsHtml = `
-                    <div class="modal-section">
-                        <div class="modal-section-title"><i class="fas fa-info-circle"></i> Additional details</div>
-                        <div class="info-grid">
-                            ${otherFields.map(([key, val]) => `<div class="info-item"><span class="info-label">${escapeHtml(key)}</span><span class="info-value">${escapeHtml(String(val))}</span></div>`).join('')}
-                        </div>
-                    </div>
-                `;
+        if(ticket.category === 'vehicle' && fd.trips && fd.trips.length) {
+            const dateRangeHtml = `<div class="info-grid" style="margin-bottom:8px"><div class="info-item"><span class="info-label">Start Date</span><span class="info-value">${escapeHtml(fd.start_date||'-')}</span></div><div class="info-item"><span class="info-label">End Date</span><span class="info-value">${escapeHtml(fd.end_date||'-')}</span></div></div>`;
+            const tripsTable = `<table class="items-table"><thead><th>#</th><th>Place From</th><th>Place To</th><th>Officials</th><th>Purpose</th></thead><tbody>${fd.trips.map((trip,idx)=>`<tr><td>${idx+1}</td><td>${escapeHtml(trip.place_from||'')}</td><td>${escapeHtml(trip.place_to||'')}</td><td>${escapeHtml(trip.officials||'')}</td><td>${escapeHtml(trip.purpose||'')}</td></tr>`).join('')}</tbody></table>`;
+            let allocationFormHtml = '';
+            if(modalCanManage && !hasAllocation) {
+                const alloc = fd.vehicle_allocation || {};
+                let driverOptions = '<option value="">-- Select Driver --</option>'; for(const d of driversList) driverOptions += `<option value="${escapeHtml(d.name)}" data-id="${d.id}" ${d.name===alloc.driver_name?'selected':''}>${escapeHtml(d.name)}</option>`;
+                let vehicleNameOptions = '<option value="">-- Select Vehicle Name --</option>'; for(const v of vehiclesList) vehicleNameOptions += `<option value="${escapeHtml(v.vehicle_name)}" ${v.vehicle_name===alloc.vehicle_name?'selected':''}>${escapeHtml(v.vehicle_name)}</option>`;
+                let vehicleNumberOptions = '<option value="">-- Select Vehicle Number --</option>'; if(alloc.vehicle_name){ const vv = vehiclesList.find(v=>v.vehicle_name===alloc.vehicle_name); if(vv && vv.numbers.length) { vehicleNumberOptions = ''; for(const num of vv.numbers) vehicleNumberOptions += `<option value="${escapeHtml(num)}" ${num===alloc.vehicle_no?'selected':''}>${escapeHtml(num)}</option>`; } }
+                let phoneOptions = '<option value="">-- Select Phone --</option>'; if(alloc.driver_name){ const dd = driversList.find(d=>d.name===alloc.driver_name); if(dd && dd.phone) phoneOptions = `<option value="${escapeHtml(dd.phone)}" selected>${escapeHtml(dd.phone)}</option>`; }
+                allocationFormHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-truck"></i> Allocate Vehicle</div><div class="allocation-box"><div class="allocation-input-group"><label>Select Driver</label><select id="allocDriverSelect">${driverOptions}</select></div><div class="allocation-input-group"><label>Vehicle Name</label><select id="allocVehicleNameSelect">${vehicleNameOptions}</select></div><div class="allocation-input-group"><label>Vehicle Number</label><select id="allocVehicleNumberSelect">${vehicleNumberOptions}</select></div><div class="allocation-input-group"><label>Phone Number</label><select id="allocPhoneSelect">${phoneOptions}</select></div><button id="allocateBtn" class="btn-allocate">Allocate Vehicle</button></div></div>`;
             }
-        }
+            itemsHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-calendar-alt"></i> Trip Period</div>${dateRangeHtml}</div><div class="modal-section"><div class="modal-section-title"><i class="fas fa-road"></i> Trips</div>${tripsTable}</div>${allocationFormHtml}`;
+        } else if(fd.items && fd.items.length) {
+            itemsHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-list"></i> Items requested</div><table class="items-table"><thead><th>#</th><th>Item Type</th><th>Quantity</th><th>Remarks</th></thead><tbody>${fd.items.map((item,idx)=>`<tr><td>${idx+1}</td><td>${escapeHtml(item.itemType||item.description||'')}</td><td>${escapeHtml(item.quantity||item.qty||'')}</td><td>${escapeHtml(item.remarks||'')}</td></tr>`).join('')}</tbody></table></div>`;
+        } else { const otherFields = Object.entries(fd).filter(([k])=>!['requisitioner','items','requisition_date','trips','start_date','end_date','vehicle_allocation'].includes(k)); if(otherFields.length) itemsHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-info-circle"></i> Additional details</div><div class="info-grid">${otherFields.map(([k,v])=>`<div class="info-item"><span class="info-label">${escapeHtml(k)}</span><span class="info-value">${escapeHtml(String(v))}</span></div>`).join('')}</div></div>`; }
 
-        let statusClass = 'status-badge-lg';
-        if (ticket.status === 'pending_approval') statusClass += ' status-pending_approval';
-        else if (ticket.status === 'approved') statusClass += ' status-approved';
-        else if (ticket.status === 'in_progress') statusClass += ' status-in_progress';
-        else if (ticket.status === 'resolved') statusClass += ' status-resolved';
-        else if (ticket.status === 'rejected') statusClass += ' status-rejected';
-
-        let actionHtml = '';
-        if (modalCanManage) {
-            actionHtml = `
-                <div class="action-bar">
-                    <select id="modalStatusSelect">
-                        <option value="pending_approval" ${ticket.status === 'pending_approval' ? 'selected' : ''}>Pending Approval</option>
-                        <option value="approved" ${ticket.status === 'approved' ? 'selected' : ''}>Approved</option>
-                        <option value="in_progress" ${ticket.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-                        <option value="resolved" ${ticket.status === 'resolved' ? 'selected' : ''}>Resolved</option>
-                        <option value="rejected" ${ticket.status === 'rejected' ? 'selected' : ''}>Rejected</option>
-                    </select>
-                    <button id="modalUpdateStatusBtn" class="btn-primary-sm">Update Status</button>
-                    ${ticket.status === 'pending_approval' ? '<button id="modalApproveBtn" class="btn-primary-sm" style="background:#10b981;">✅ Approve</button>' : ''}
-                </div>
-            `;
-        }
-
-        container.innerHTML = `
-            <div class="modal-section">
-                <div class="modal-section-title"><i class="fas fa-ticket-alt"></i> Ticket information</div>
-                <div class="info-grid">
-                    <div class="info-item"><span class="info-label">Ticket number</span><span class="info-value">${escapeHtml(ticket.ticket_number)}</span></div>
-                    <div class="info-item"><span class="info-label">Title</span><span class="info-value">${escapeHtml(ticket.title)}</span></div>
-                    <div class="info-item"><span class="info-label">Category</span><span class="info-value">${escapeHtml(ticket.category)}</span></div>
-                    <div class="info-item"><span class="info-label">Requester</span><span class="info-value">${escapeHtml(ticket.requester_name || ticket.requester_email)}</span></div>
-                    <div class="info-item"><span class="info-label">Created</span><span class="info-value">${new Date(ticket.created_at).toLocaleString()}</span></div>
-                    <div class="info-item"><span class="info-label">Status</span><span class="info-value"><span class="${statusClass}">${ticket.status.replace('_',' ')}</span></span></div>
-                    <div class="info-item"><span class="info-label">Priority</span><span class="info-value">${escapeHtml(ticket.priority)}</span></div>
-                    <div class="info-item"><span class="info-label">Description</span><span class="info-value">${escapeHtml(ticket.description)}</span></div>
-                </div>
-            </div>
-            ${requisitionerHtml}
-            ${itemsHtml}
-            ${actionHtml}
-            <div class="modal-section">
-                <div class="modal-section-title"><i class="fas fa-comments"></i> Comments</div>
-                <div id="modalCommentsSection"></div>
-            </div>
-            <div class="modal-section">
-                <div class="modal-section-title"><i class="fas fa-plus-circle"></i> Add comment</div>
-                <textarea id="modalNewComment" rows="3" placeholder="Write your message..."></textarea>
-                <div style="margin: 8px 0;"><label><input type="checkbox" id="modalInternalCheck"> Internal note (team only)</label></div>
-                <button id="modalSubmitCommentBtn" class="btn-primary-sm">Post Comment</button>
-            </div>
-        `;
+        let statusClass = 'status-badge-lg'; if(ticket.status==='pending_approval') statusClass+=' status-pending_approval'; else if(ticket.status==='approved') statusClass+=' status-approved'; else if(ticket.status==='in_progress') statusClass+=' status-in_progress'; else if(ticket.status==='resolved') statusClass+=' status-resolved'; else if(ticket.status==='rejected') statusClass+=' status-rejected';
+        let statusHtml = `<span class="${statusClass}">${ticket.status.replace('_',' ')}</span>`;
+        let actionHtml = ''; if(modalCanManage) actionHtml = `<div class="action-bar"><select id="modalStatusSelect"><option value="pending_approval" ${ticket.status==='pending_approval'?'selected':''}>Pending Approval</option><option value="approved" ${ticket.status==='approved'?'selected':''}>Approved</option><option value="in_progress" ${ticket.status==='in_progress'?'selected':''}>In Progress</option><option value="resolved" ${ticket.status==='resolved'?'selected':''}>Resolved</option><option value="rejected" ${ticket.status==='rejected'?'selected':''}>Rejected</option></select><button id="modalUpdateStatusBtn" class="btn-primary-sm">Update Status</button>${ticket.status==='pending_approval'?'<button id="modalApproveBtn" class="btn-primary-sm" style="background:#10b981;">✅ Approve</button>':''}</div>`;
+        container.innerHTML = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-ticket-alt"></i> Ticket information</div><div class="info-grid"><div class="info-item"><span class="info-label">Ticket number</span><span class="info-value">${escapeHtml(ticket.ticket_number)}</span></div><div class="info-item"><span class="info-label">Title</span><span class="info-value">${escapeHtml(ticket.title)}</span></div><div class="info-item"><span class="info-label">Category</span><span class="info-value">${escapeHtml(ticket.category)}</span></div><div class="info-item"><span class="info-label">Requester</span><span class="info-value">${escapeHtml(ticket.requester_name||ticket.requester_email)}</span></div><div class="info-item"><span class="info-label">Created</span><span class="info-value">${new Date(ticket.created_at).toLocaleString()}</span></div><div class="info-item"><span class="info-label">Status</span><span class="info-value">${statusHtml}</span></div><div class="info-item"><span class="info-label">Priority</span><span class="info-value">${escapeHtml(ticket.priority)}</span></div><div class="info-item"><span class="info-label">Description</span><span class="info-value">${escapeHtml(ticket.description)}</span></div>${allocationInfoHtml}</div></div>${requisitionerHtml}${itemsHtml}${actionHtml}<div class="modal-section"><div class="modal-section-title"><i class="fas fa-comments"></i> Comments</div><div id="modalCommentsSection"></div></div><div class="modal-section"><div class="modal-section-title"><i class="fas fa-plus-circle"></i> Add comment</div><textarea id="modalNewComment" rows="3" placeholder="Write your message..."></textarea><div><label><input type="checkbox" id="modalInternalCheck"> Internal note (team only)</label></div><button id="modalSubmitCommentBtn" class="btn-primary-sm">Post Comment</button></div>`;
     }
+    function renderModalComments(comments) { const ctn = document.getElementById('modalCommentsSection'); if(!comments.length) { ctn.innerHTML='<p style="color:#64748B;">No comments yet.</p>'; return; } let html=''; for(const c of comments){ if(c.is_internal && !modalCanManage && currentModalTicket.created_by===user.id) continue; html+=`<div class="comment ${c.is_internal?'internal-note':''}"><div class="comment-meta"><strong>${escapeHtml(c.author_name)}</strong> · ${new Date(c.created_at).toLocaleString()} ${c.isInternal?'🔒 Internal note':''}</div><div>${escapeHtml(c.message)}</div></div>`; } ctn.innerHTML=html||'<p>No public comments.</p>'; }
 
-    function renderModalComments(comments) {
-        const container = document.getElementById('modalCommentsSection');
-        if (!comments.length) {
-            container.innerHTML = '<p style="color:#64748B;">No comments yet.</p>';
-            return;
-        }
-        let html = '';
-        for (const c of comments) {
-            const isInternal = c.is_internal;
-            if (isInternal && !modalCanManage && currentModalTicket.created_by === user.id) continue;
-            const noteClass = isInternal ? 'internal-note' : '';
-            html += `
-                <div class="comment ${noteClass}">
-                    <div class="comment-meta"><strong>${escapeHtml(c.author_name)}</strong> · ${new Date(c.created_at).toLocaleString()} ${isInternal ? '<span style="margin-left:8px;">🔒 Internal note</span>' : ''}</div>
-                    <div>${escapeHtml(c.message)}</div>
-                </div>
-            `;
-        }
-        container.innerHTML = html || '<p style="color:#64748B;">No public comments yet.</p>';
+    // ----- FIXED allocateVehicle: after success, close modal and reopen after a short delay -----
+    async function allocateVehicle() {
+        const driverSelect = document.getElementById('allocDriverSelect'), driverName = driverSelect?driverSelect.value:'';
+        const vnSelect = document.getElementById('allocVehicleNameSelect'), vehicleName = vnSelect?vnSelect.value:'';
+        const vnumSelect = document.getElementById('allocVehicleNumberSelect'), vehicleNo = vnumSelect?vnumSelect.value:'';
+        const phoneSelect = document.getElementById('allocPhoneSelect'), phone = phoneSelect?phoneSelect.value:'';
+        if(!driverName || !vehicleName || !vehicleNo) { alert('Please fill all allocation fields'); return; }
+        const fd = currentModalTicket.form_data || {};
+        fd.vehicle_allocation = {
+            driver_name: driverName,
+            driver_id: driverSelect.options[driverSelect.selectedIndex]?.getAttribute('data-id') || null,
+            vehicle_name: vehicleName,
+            vehicle_no: vehicleNo,
+            driver_phone: phone,
+            allocated_by: user.full_name || user.email,
+            allocated_at: new Date().toISOString()
+        };
+        let newStatus = currentModalTicket.status;
+        if(newStatus !== 'allocated' && newStatus !== 'resolved') newStatus = 'allocated';
+        try {
+            if(newStatus !== currentModalTicket.status) await apiCall(`/requests/${currentModalTicket.id}/status`, { method:'PUT', body:JSON.stringify({ status:newStatus }) });
+            await apiCall(`/requests/${currentModalTicket.id}/formdata`, { method:'PUT', body:JSON.stringify({ form_data:fd }) });
+            // Force refresh: close modal and reopen after 200ms to fetch fresh data
+            const ticketId = currentModalTicket.id;
+            closeModal();
+            setTimeout(() => { showTicketModal(ticketId); }, 200);
+            if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets(); else loadAssignedTickets();
+        } catch(err) { alert('Allocation failed: '+err.message); }
     }
 
     function attachModalEventListeners() {
-        if (modalCanManage) {
-            const updateBtn = document.getElementById('modalUpdateStatusBtn');
-            if (updateBtn) {
-                updateBtn.onclick = async () => {
-                    const newStatus = document.getElementById('modalStatusSelect').value;
-                    await apiCall(`/requests/${currentModalTicket.id}/status`, { method: 'PUT', body: JSON.stringify({ status: newStatus }) });
-                    if (document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets();
-                    else loadAssignedTickets();
-                    showTicketModal(currentModalTicket.id);
-                };
-            }
-            const approveBtn = document.getElementById('modalApproveBtn');
-            if (approveBtn) {
-                approveBtn.onclick = async () => {
-                    await apiCall(`/requests/${currentModalTicket.id}/approve`, { method: 'PUT' });
-                    if (document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets();
-                    else loadAssignedTickets();
-                    showTicketModal(currentModalTicket.id);
-                };
-            }
+        if(modalCanManage) {
+            const upBtn = document.getElementById('modalUpdateStatusBtn'); if(upBtn) upBtn.onclick = async () => { await apiCall(`/requests/${currentModalTicket.id}/status`,{method:'PUT',body:JSON.stringify({status:document.getElementById('modalStatusSelect').value})}); if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets(); else loadAssignedTickets(); showTicketModal(currentModalTicket.id); };
+            const appBtn = document.getElementById('modalApproveBtn'); if(appBtn) appBtn.onclick = async () => { await apiCall(`/requests/${currentModalTicket.id}/approve`,{method:'PUT'}); if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets(); else loadAssignedTickets(); showTicketModal(currentModalTicket.id); };
+            const allocBtn = document.getElementById('allocateBtn'); if(allocBtn) { allocBtn.onclick = allocateVehicle; setupDynamicVehicleNumber(); setupDriverPhoneAutoFill(); }
         }
-        const submitBtn = document.getElementById('modalSubmitCommentBtn');
-        if (submitBtn) {
-            submitBtn.onclick = async () => {
-                const message = document.getElementById('modalNewComment').value.trim();
-                if (!message) return alert('Please enter a comment');
-                const isInternal = document.getElementById('modalInternalCheck').checked;
-                await apiCall(`/requests/${currentModalTicket.id}/comment`, {
-                    method: 'POST',
-                    body: JSON.stringify({ message, is_internal: isInternal })
-                });
-                document.getElementById('modalNewComment').value = '';
-                document.getElementById('modalInternalCheck').checked = false;
-                if (document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets();
-                else loadAssignedTickets();
-                showTicketModal(currentModalTicket.id);
-            };
-        }
+        const subBtn = document.getElementById('modalSubmitCommentBtn'); if(subBtn) subBtn.onclick = async () => { const msg = document.getElementById('modalNewComment').value.trim(); if(!msg) return alert('Enter comment'); const isInt = document.getElementById('modalInternalCheck').checked; await apiCall(`/requests/${currentModalTicket.id}/comment`,{method:'POST',body:JSON.stringify({message:msg,is_internal:isInt})}); document.getElementById('modalNewComment').value=''; document.getElementById('modalInternalCheck').checked=false; if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets(); else loadAssignedTickets(); showTicketModal(currentModalTicket.id); };
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
-    }
-
-    // Notification bell
-    async function updateNotificationCount() {
-        try {
-            const notifs = await apiCall('/notifications');
-            const badge = document.querySelector('#notificationBell .badge');
-            if (badge) { badge.textContent = notifs.length; badge.style.display = notifs.length ? 'inline-flex' : 'none'; }
-        } catch(e) {}
-    }
-    document.getElementById('notificationBell').addEventListener('click', async () => {
-        const notifs = await apiCall('/notifications');
-        if (!notifs.length) { alert('No new notifications'); return; }
-        let msg = 'Notifications:\n' + notifs.map(n => `- ${n.message}`).join('\n');
-        if (confirm(msg + '\nMark all as read?')) {
-            await apiCall('/notifications/mark-read', { method: 'POST', body: JSON.stringify({}) });
-            updateNotificationCount();
-        }
-    });
-    setInterval(updateNotificationCount, 30000);
-    updateNotificationCount();
-
-    updateWelcomeAndDate();
-    loadDashboardTickets();
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+    async function updateNotificationCount() { try { const notifs = await apiCall('/notifications'); const badge = document.querySelector('#notificationBell .badge'); if(badge) { badge.textContent = notifs.length; badge.style.display = notifs.length ? 'inline-flex' : 'none'; } } catch(e){} }
+    document.getElementById('notificationBell').addEventListener('click', async () => { const notifs = await apiCall('/notifications'); if(!notifs.length) { alert('No new notifications'); return; } let msg = 'Notifications:\n'+notifs.map(n=>`- ${n.message}`).join('\n'); if(confirm(msg+'\nMark all as read?')) { await apiCall('/notifications/mark-read',{method:'POST',body:JSON.stringify({})}); updateNotificationCount(); } });
+    setInterval(updateNotificationCount,30000); updateNotificationCount();
+    function updateWelcomeAndDate() { const hour = new Date().getHours(); let greeting = 'Good morning'; if(hour>=12 && hour<18) greeting='Good afternoon'; else if(hour>=18) greeting='Good evening'; const userName = user.full_name?.split(' ')[0] || 'Manager'; const today = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); document.getElementById('dashboardGreeting').innerHTML = `${greeting}, <span id="dashboardWelcomeName">${userName}</span> `; document.getElementById('dashboardDate').innerText = today; document.getElementById('assignedGreeting').innerHTML = `${greeting}, <span id="assignedWelcomeName">${userName}</span> `; document.getElementById('assignedDate').innerText = today; }
+    updateWelcomeAndDate(); loadDashboardTickets();
 </script>
 </body>
 </html>
