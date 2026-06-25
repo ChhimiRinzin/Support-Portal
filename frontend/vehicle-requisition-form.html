@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAA Support – Vehicle Requisition</title>
     <style>
+        /* Same styles as before – unchanged */
         * {
             margin: 0;
             padding: 0;
@@ -111,7 +112,7 @@
         }
         .items-table textarea {
             resize: vertical;
-            min-height: 50px;
+            min-height: 60px;
         }
         .add-row-btn {
             background: #e2e8f0;
@@ -204,7 +205,8 @@
             <button type="button" class="add-row-btn" id="addRowBtn">+ Add Trip</button>
 
             <div class="info-note">
-                <i class="fas fa-info-circle"></i> Your details (name, email, designation, division) will be automatically attached.
+                <i class="fas fa-info-circle"></i> Your details (name, email, designation, division) will be automatically attached.<br>
+                <strong>For officials:</strong> Write each name on a new line (or separate with commas).
             </div>
 
             <button type="submit" class="btn-submit" id="submitBtn">Submit Requisition →</button>
@@ -296,14 +298,14 @@
     endDateInput.addEventListener('input', validateEndDate);
     endDateInput.addEventListener('blur', validateEndDate);
 
-    // Dynamic table rows (no date)
+    // Dynamic table rows
     function addTableRow() {
         const tbody = document.getElementById('itemsBody');
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><input type="text" class="place-from" placeholder="From" required></td>
             <td><input type="text" class="place-to" placeholder="To" required></td>
-            <td><textarea rows="2" class="officials" placeholder="Names (one per line or comma separated)" required></textarea></td>
+            <td><textarea rows="3" class="officials" placeholder="Write each name on a new line" required></textarea></td>
             <td><input type="text" class="purpose" placeholder="Purpose" required></td>
             <td><button type="button" class="remove-row" onclick="this.closest('tr').remove();" style="background:#fee2e2; border:none; border-radius:4px; padding:4px 8px;">✖</button></td>
         `;
@@ -315,7 +317,7 @@
     document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         globalErrorDiv.style.display = 'none';
-        
+
         // Validate dates
         const isStartValid = validateStartDate();
         const isEndValid = validateEndDate();
@@ -342,15 +344,23 @@
         for (const row of rows) {
             const placeFrom = row.querySelector('.place-from')?.value.trim();
             const placeTo = row.querySelector('.place-to')?.value.trim();
-            const officials = row.querySelector('.officials')?.value.trim();
+            const officialsRaw = row.querySelector('.officials')?.value.trim();
             const purpose = row.querySelector('.purpose')?.value.trim();
 
-            if (!placeFrom || !placeTo || !officials || !purpose) {
+            if (!placeFrom || !placeTo || !officialsRaw || !purpose) {
                 globalErrorDiv.textContent = 'Please fill in all fields (From, To, Officials, Purpose) for each trip.';
                 globalErrorDiv.style.display = 'block';
                 hasError = true;
                 break;
             }
+
+            // Convert newline-separated list to comma-separated
+            const officials = officialsRaw
+                .split(/\n/)
+                .map(line => line.trim())
+                .filter(line => line.length > 0)
+                .join(', ');
+
             trips.push({ place_from: placeFrom, place_to: placeTo, officials, purpose });
         }
         if (hasError) return;
@@ -395,7 +405,9 @@
             const result = await response.json();
             if (!response.ok) throw new Error(result.message);
             alert(`✅ Vehicle requisition submitted! Ticket: ${result.ticket_number}`);
-            window.location.href = 'dashboard.html';
+            // Redirect based on role
+            const dashboardUrl = currentUser.is_manager ? 'manager-dashboard.html' : 'dashboard.html';
+            window.location.href = dashboardUrl;
         } catch (err) {
             globalErrorDiv.textContent = err.message;
             globalErrorDiv.style.display = 'block';

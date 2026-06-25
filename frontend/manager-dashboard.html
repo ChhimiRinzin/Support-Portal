@@ -6,7 +6,7 @@
     <title>RAA Support – Manager Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ========== EXACT SAME STYLES AS BEFORE – NO CHANGES ========== */
+        /* ========== STYLES (unchanged) ========== */
         * {
             margin: 0;
             padding: 0;
@@ -263,6 +263,62 @@
             transition: 0.2s;
         }
         .modal-close:hover { color: #b91c1c; }
+
+        /* ===== SIMPLE TICKET VIEW (new, plain layout) ===== */
+        .tv-section { margin-bottom: 24px; }
+        .tv-section:last-child { margin-bottom: 0; }
+        .tv-heading {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0F5C5F;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .tv-row {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 6px 0;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.9rem;
+        }
+        .tv-row:last-child { border-bottom: none; }
+        .tv-label {
+            width: 180px;
+            flex-shrink: 0;
+            color: #64748B;
+            font-weight: 500;
+        }
+        .tv-value {
+            flex: 1;
+            min-width: 150px;
+            color: #1E293B;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+        .tv-value.empty { color: #94A3B8; font-style: italic; }
+        .tv-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 0.85rem;
+        }
+        .tv-table th, .tv-table td {
+            border: 1px solid #E2E8F0;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .tv-table th { background: #F8FAFC; font-weight: 600; color: #334155; }
+        .tv-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 30px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        /* ===== end simple ticket view ===== */
+
         .modal-section {
             margin-bottom: 28px;
         }
@@ -424,7 +480,231 @@
             .info-grid { grid-template-columns: 1fr; }
             .action-buttons { gap: 4px; }
             .action-btn { padding: 4px 8px; font-size: 11px; }
+            .tv-label { width: 130px; }
         }
+
+        /* ===== ASSIGNED PANE – IMPROVED STRUCTURE ===== */
+
+        /* Header strip – purposeful work-queue feel, not a copy of the dashboard banner */
+        .assigned-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 18px 24px;
+            background: white;
+            border-radius: 16px;
+            border-left: 5px solid #0F5C5F;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .assigned-header-left { display: flex; align-items: center; gap: 14px; }
+        .assigned-header-icon {
+            width: 44px;
+            height: 44px;
+            background: #E9F4F4;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #0F5C5F;
+            flex-shrink: 0;
+        }
+        .assigned-header-text h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0F5C5F;
+            margin-bottom: 2px;
+        }
+        .assigned-header-text p { font-size: 0.82rem; color: #64748B; }
+        .assigned-header-date {
+            font-size: 0.82rem;
+            color: #64748B;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Stats row – icons + tighter, wider range of statuses */
+        .assigned-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .assigned-stat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 3px solid;
+            transition: transform 0.18s, box-shadow 0.18s;
+        }
+        .assigned-stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+        .assigned-stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .assigned-stat-body { min-width: 0; }
+        .assigned-stat-number { font-size: 22px; font-weight: 700; line-height: 1.1; }
+        .assigned-stat-label { font-size: 11px; color: #64748B; margin-top: 2px; white-space: nowrap; }
+
+        /* Filter panel */
+        .assigned-filter-panel {
+            background: white;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .assigned-filter-panel .search-wrapper { flex: 1; min-width: 180px; }
+        .assigned-filter-panel .filter-select,
+        .assigned-filter-panel .filter-input {
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+            background: #F8FAFC;
+            font-size: 13px;
+            padding: 7px 12px;
+            color: #334155;
+        }
+        .assigned-filter-panel .search-wrapper input {
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+            background: #F8FAFC;
+            font-size: 13px;
+            padding: 7px 12px 7px 34px;
+        }
+
+        /* Ticket table – improved hierarchy */
+        .assigned-table-wrap {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .assigned-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+        .assigned-table thead th {
+            background: #F8FAFC;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748B;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .assigned-table tbody tr {
+            border-bottom: 1px solid #F1F5F9;
+            transition: background 0.15s;
+        }
+        .assigned-table tbody tr:last-child { border-bottom: none; }
+        .assigned-table tbody tr:hover { background: #F8FAFC; }
+        .assigned-table td {
+            padding: 12px 14px;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+
+        /* Left status strip */
+        .at-status-strip {
+            width: 4px;
+            padding: 0 !important;
+        }
+        .at-strip-pending_approval { background: #F59E0B; }
+        .at-strip-approved          { background: #10B981; }
+        .at-strip-in_progress       { background: #3B82F6; }
+        .at-strip-resolved          { background: #22C55E; }
+        .at-strip-rejected          { background: #EF4444; }
+
+        /* Category icon cell */
+        .at-cat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        /* Ticket number + title stacked */
+        .at-ticket-meta { display: flex; flex-direction: column; gap: 2px; }
+        .at-ticket-num  { font-size: 11px; color: #94A3B8; font-weight: 500; }
+        .at-ticket-title { font-size: 13px; font-weight: 600; color: #1E293B; }
+
+        /* Requester cell */
+        .at-requester { font-size: 12px; color: #475569; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Date cell */
+        .at-date { font-size: 12px; color: #64748B; white-space: nowrap; }
+
+        /* View button – more prominent */
+        .at-view-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 14px;
+            border-radius: 8px;
+            background: #0F5C5F;
+            color: white;
+            border: none;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.18s, transform 0.15s;
+            white-space: nowrap;
+        }
+        .at-view-btn:hover { background: #0a4547; transform: translateY(-1px); }
+
+        /* Pagination */
+        .assigned-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 14px;
+            border-top: 1px solid #F1F5F9;
+        }
+        .assigned-pagination button {
+            padding: 5px 14px;
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+            background: white;
+            font-size: 12px;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .assigned-pagination button:hover:not(:disabled) { background: #0F5C5F; color: white; border-color: #0F5C5F; }
+        .assigned-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .assigned-pagination .ap-page-info { font-size: 12px; color: #64748B; padding: 0 6px; }
+
+        @media (max-width: 640px) {
+            .assigned-stats-grid { grid-template-columns: 1fr 1fr; }
+            .at-requester { display: none; }
+        }
+        /* ===== END ASSIGNED PANE ===== */
     </style>
 </head>
 <body>
@@ -466,32 +746,105 @@
         </div>
         <div class="content">
             <div id="dashboardPane" class="pane active">
-                <div class="welcome-card">
-                    <div><h2 id="dashboardGreeting">Good morning, <span id="dashboardWelcomeName"></span> </h2><p>Here’s an overview of your service requests</p></div>
-                    <div><i class="fas fa-calendar-alt"></i> <span id="dashboardDate"></span></div>
+
+                <!-- Header strip -->
+                <div class="assigned-header">
+                    <div class="assigned-header-left">
+                        <div class="assigned-header-icon"><i class="fas fa-tachometer-alt"></i></div>
+                        <div class="assigned-header-text">
+                            <h2 id="dashboardGreeting">Dashboard</h2>
+                            <p>Overview of all service requests you have submitted</p>
+                        </div>
+                    </div>
+                    <div class="assigned-header-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="dashboardDate"></span>
+                    </div>
                 </div>
-                <div class="stats-grid" id="dashboardStatsGrid"></div>
-                <div class="filter-bar">
-                    <div class="search-wrapper"><i class="fas fa-search"></i><input type="text" id="dashboardSearch" placeholder="Search by ID or title"></div>
-                    <select id="dashboardStatusFilter" class="filter-select"><option value="">All status</option><option value="pending_approval">Pending</option><option value="approved">Approved</option><option value="in_progress">In Progress</option><option value="resolved">Resolved</option><option value="rejected">Rejected</option></select>
-                    <select id="dashboardCategoryFilter" class="filter-select"><option value="">All services</option><option value="repair">Repair</option><option value="ict">ICT</option><option value="vehicle">Vehicle</option><option value="aims">AIMS</option><option value="asws_membership">ASWS Registration</option><option value="asws_loan">ASWS Loan</option></select>
+
+                <!-- Stats -->
+                <div class="assigned-stats-grid" id="dashboardStatsGrid"></div>
+
+                <!-- Filter panel -->
+                <div class="assigned-filter-panel">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="dashboardSearch" placeholder="Search by ticket ID or title…">
+                    </div>
+                    <select id="dashboardStatusFilter" class="filter-select">
+                        <option value="">All statuses</option>
+                        <option value="pending_approval">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <select id="dashboardCategoryFilter" class="filter-select">
+                        <option value="">All services</option>
+                        <option value="repair">Repair</option>
+                        <option value="ict">ICT</option>
+                        <option value="vehicle">Vehicle</option>
+                        <option value="aims">AIMS</option>
+                        <option value="asws_membership">ASWS Registration</option>
+                        <option value="asws_loan">ASWS Loan</option>
+                    </select>
                     <input type="date" id="dashboardDateFilter" class="filter-input">
                 </div>
+
+                <!-- Tickets -->
                 <div id="dashboardTicketsContainer"></div>
+
             </div>
+
             <div id="assignedPane" class="pane">
-                <div class="welcome-card">
-                    <div><h2 id="assignedGreeting">Good morning, <span id="assignedWelcomeName"></span> </h2><p>Here’s an overview of tickets assigned to you</p></div>
-                    <div><i class="fas fa-calendar-alt"></i> <span id="assignedDate"></span></div>
+
+                <!-- Header strip -->
+                <div class="assigned-header">
+                    <div class="assigned-header-left">
+                        <div class="assigned-header-icon"><i class="fas fa-tasks"></i></div>
+                        <div class="assigned-header-text">
+                            <h2 id="assignedGreeting">Assigned to Me</h2>
+                            <p>Tickets routed to you for review or action</p>
+                        </div>
+                    </div>
+                    <div class="assigned-header-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="assignedDate"></span>
+                    </div>
                 </div>
-                <div class="stats-grid" id="assignedStatsGrid"></div>
-                <div class="filter-bar">
-                    <div class="search-wrapper"><i class="fas fa-search"></i><input type="text" id="assignedSearch" placeholder="Search by ID or title"></div>
-                    <select id="assignedStatusFilter" class="filter-select"><option value="">All status</option><option value="pending_approval">Pending</option><option value="approved">Approved</option><option value="in_progress">In Progress</option><option value="resolved">Resolved</option><option value="rejected">Rejected</option></select>
-                    <select id="assignedCategoryFilter" class="filter-select"><option value="">All services</option><option value="repair">Repair</option><option value="ict">ICT</option><option value="vehicle">Vehicle</option><option value="aims">AIMS</option><option value="asws_membership">ASWS Registration</option><option value="asws_loan">ASWS Loan</option></select>
+
+                <!-- Stats -->
+                <div class="assigned-stats-grid" id="assignedStatsGrid"></div>
+
+                <!-- Filter panel -->
+                <div class="assigned-filter-panel">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="assignedSearch" placeholder="Search by ticket ID or title…">
+                    </div>
+                    <select id="assignedStatusFilter" class="filter-select">
+                        <option value="">All statuses</option>
+                        <option value="pending_approval">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <select id="assignedCategoryFilter" class="filter-select">
+                        <option value="">All services</option>
+                        <option value="repair">Repair</option>
+                        <option value="ict">ICT</option>
+                        <option value="vehicle">Vehicle</option>
+                        <option value="aims">AIMS</option>
+                        <option value="asws_membership">ASWS Registration</option>
+                        <option value="asws_loan">ASWS Loan</option>
+                    </select>
                     <input type="date" id="assignedDateFilter" class="filter-input">
                 </div>
+
+                <!-- Tickets -->
                 <div id="assignedTicketsContainer"></div>
+
             </div>
         </div>
     </div>
@@ -618,8 +971,115 @@
     let dashboardTickets = [], dashboardFiltered = [], currentDashboardPage = 1;
     async function loadDashboardTickets() { try { const all = await apiCall('/requests'); dashboardTickets = all.filter(t => t.created_by === user.id); applyDashboardFilters(); } catch(err) { document.getElementById('dashboardTicketsContainer').innerHTML = `<div class="empty-state">❌ Error: ${err.message}</div>`; } }
     function applyDashboardFilters() { const search = document.getElementById('dashboardSearch').value.toLowerCase(); const status = document.getElementById('dashboardStatusFilter').value; const category = document.getElementById('dashboardCategoryFilter').value; const date = document.getElementById('dashboardDateFilter').value; dashboardFiltered = dashboardTickets.filter(t => (t.ticket_number.toLowerCase().includes(search) || t.title.toLowerCase().includes(search)) && (!status || t.status===status) && (!category || t.category===category) && (!date || new Date(t.created_at).toISOString().slice(0,10)===date)); renderDashboardStats(); renderDashboardTickets(); }
-    function renderDashboardStats() { const total = dashboardFiltered.length, pending = dashboardFiltered.filter(t=>t.status==='pending_approval').length, approved = dashboardFiltered.filter(t=>t.status==='approved').length, rejected = dashboardFiltered.filter(t=>t.status==='rejected').length; document.getElementById('dashboardStatsGrid').innerHTML = `<div class="stat-card" style="border-left-color:#F59E0B"><div class="stat-number">${total}</div><div class="stat-label">Total Tickets</div></div><div class="stat-card" style="border-left-color:#3B82F6"><div class="stat-number">${pending}</div><div class="stat-label">Pending</div></div><div class="stat-card" style="border-left-color:#10B981"><div class="stat-number">${approved}</div><div class="stat-label">Approved</div></div><div class="stat-card" style="border-left-color:#EF4444"><div class="stat-number">${rejected}</div><div class="stat-label">Rejected</div></div>`; }
-    function renderDashboardTickets() { const container = document.getElementById('dashboardTicketsContainer'); if(!dashboardFiltered.length) { container.innerHTML = `<div class="empty-state"><i class="fas fa-ticket-alt"></i><p>No tickets found</p></div>`; return; } const start=(currentDashboardPage-1)*5; const paginated=dashboardFiltered.slice(start, start+5); let html=`<div class="table-container"><table class="tickets-table"><thead><th>Ticket #</th><th>Service</th><th>Title</th><th>Date</th><th>Status</th><th>Action</th></thead><tbody>`; for(const t of paginated){ const isPending=t.status==='pending_approval'; html+=`<tr><td>${escapeHtml(t.ticket_number)}</td><td>${escapeHtml(t.category.replace('_',' '))}</td><td>${escapeHtml(t.title)}</td><td>${new Date(t.created_at).toLocaleDateString()}</td><td><span class="status-badge status-${t.status}">${t.status.replace('_',' ')}</span></td><td class="action-cell"><div class="action-buttons"><button class="action-btn view-btn" onclick="showTicketModal(${t.id})">View</button>${isPending?`<button class="action-btn edit-btn" onclick="openEditModal(${t.id})">Edit</button><button class="action-btn delete-btn" onclick="deleteTicket(${t.id},'${t.ticket_number}')">Delete</button>`:''}</div></td></tr>`; } html+=`</tbody></table><div id="dashboardPagination" class="pagination"></div></div>`; container.innerHTML=html; const totalPages=Math.ceil(dashboardFiltered.length/5); document.getElementById('dashboardPagination').innerHTML=`<button onclick="dashboardChangePage(-1)" ${currentDashboardPage===1?'disabled':''}>Prev</button><span>Page ${currentDashboardPage} of ${totalPages||1}</span><button onclick="dashboardChangePage(1)" ${currentDashboardPage===totalPages||totalPages===0?'disabled':''}>Next</button>`; }
+    function renderDashboardStats() {
+        const total      = dashboardFiltered.length;
+        const pending    = dashboardFiltered.filter(t => t.status === 'pending_approval').length;
+        const inProgress = dashboardFiltered.filter(t => t.status === 'in_progress').length;
+        const approved   = dashboardFiltered.filter(t => t.status === 'approved').length;
+        const resolved   = dashboardFiltered.filter(t => t.status === 'resolved').length;
+        const rejected   = dashboardFiltered.filter(t => t.status === 'rejected').length;
+        document.getElementById('dashboardStatsGrid').innerHTML = `
+            <div class="assigned-stat-card" style="border-left-color:#64748B">
+                <div class="assigned-stat-icon" style="background:#F1F5F9; color:#64748B"><i class="fas fa-layer-group"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${total}</div><div class="assigned-stat-label">Total Tickets</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#F59E0B">
+                <div class="assigned-stat-icon" style="background:#FEF9EC; color:#B45309"><i class="fas fa-clock"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${pending}</div><div class="assigned-stat-label">Pending</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#3B82F6">
+                <div class="assigned-stat-icon" style="background:#EFF6FF; color:#1D4ED8"><i class="fas fa-spinner"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${inProgress}</div><div class="assigned-stat-label">In Progress</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#10B981">
+                <div class="assigned-stat-icon" style="background:#ECFDF5; color:#065F46"><i class="fas fa-check-circle"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${approved}</div><div class="assigned-stat-label">Approved</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#22C55E">
+                <div class="assigned-stat-icon" style="background:#F0FDF4; color:#15803D"><i class="fas fa-check-double"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${resolved}</div><div class="assigned-stat-label">Resolved</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#EF4444">
+                <div class="assigned-stat-icon" style="background:#FEF2F2; color:#B91C1C"><i class="fas fa-times-circle"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${rejected}</div><div class="assigned-stat-label">Rejected</div></div>
+            </div>
+        `;
+    }
+
+    function renderDashboardTickets() {
+        const container = document.getElementById('dashboardTicketsContainer');
+        if (!dashboardFiltered.length) {
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox" style="font-size:2rem;margin-bottom:10px;display:block;color:#CBD5E1"></i><p>No tickets found</p></div>`;
+            return;
+        }
+
+        const catIcon  = c => ({ repair:'fa-tools', ict:'fa-laptop-code', vehicle:'fa-car', aims:'fa-exchange-alt', asws_membership:'fa-id-card', asws_loan:'fa-hand-holding-usd' }[c] || 'fa-tag');
+        const catColor = c => ({ repair:'#F59E0B', ict:'#3B82F6', vehicle:'#8B5CF6', aims:'#06B6D4', asws_membership:'#10B981', asws_loan:'#EC4899' }[c] || '#64748B');
+        const catBg    = c => ({ repair:'#FEF3C7', ict:'#EFF6FF', vehicle:'#EDE9FE', aims:'#E0F7FA', asws_membership:'#DCFCE7', asws_loan:'#FCE7F3' }[c] || '#F1F5F9');
+
+        const start     = (currentDashboardPage - 1) * 5;
+        const paginated = dashboardFiltered.slice(start, start + 5);
+
+        let rows = '';
+        for (const t of paginated) {
+            const icon      = catIcon(t.category);
+            const color     = catColor(t.category);
+            const bg        = catBg(t.category);
+            const date      = new Date(t.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+            const isPending = t.status === 'pending_approval';
+            rows += `
+                <tr>
+                    <td class="at-status-strip at-strip-${t.status}"></td>
+                    <td style="padding-left:10px">
+                        <div class="at-cat-icon" style="background:${bg}; color:${color}">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="at-ticket-meta">
+                            <span class="at-ticket-num">${escapeHtml(t.ticket_number)}</span>
+                            <span class="at-ticket-title">${escapeHtml(t.title)}</span>
+                        </div>
+                    </td>
+                    <td class="at-date">${date}</td>
+                    <td><span class="status-badge status-${t.status}">${t.status.replace(/_/g,' ')}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="at-view-btn" onclick="showTicketModal(${t.id})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            ${isPending ? `<button class="action-btn edit-btn" onclick="openEditModal(${t.id})"><i class="fas fa-pen"></i> Edit</button>` : ''}
+                            ${isPending ? `<button class="action-btn delete-btn" onclick="deleteTicket(${t.id},'${escapeHtml(t.ticket_number)}')"><i class="fas fa-trash"></i></button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+        }
+
+        const totalPages = Math.ceil(dashboardFiltered.length / 5);
+        container.innerHTML = `
+            <div class="assigned-table-wrap">
+                <div style="overflow-x:auto">
+                    <table class="assigned-table">
+                        <thead>
+                            <tr>
+                                <th style="width:4px; padding:0"></th>
+                                <th style="width:40px"></th>
+                                <th>Ticket / Title</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div class="assigned-pagination">
+                    <button onclick="dashboardChangePage(-1)" ${currentDashboardPage===1?'disabled':''}>&#8592; Prev</button>
+                    <span class="ap-page-info">Page ${currentDashboardPage} of ${totalPages||1}</span>
+                    <button onclick="dashboardChangePage(1)" ${currentDashboardPage===totalPages||totalPages===0?'disabled':''}>Next &#8594;</button>
+                </div>
+            </div>`;
+    }
     window.dashboardChangePage = (delta) => { currentDashboardPage += delta; renderDashboardTickets(); };
     document.getElementById('dashboardSearch').addEventListener('input', ()=>{ currentDashboardPage=1; applyDashboardFilters(); });
     document.getElementById('dashboardStatusFilter').addEventListener('change', ()=>{ currentDashboardPage=1; applyDashboardFilters(); });
@@ -629,8 +1089,113 @@
     let assignedTickets = [], assignedFiltered = [], currentAssignedPage = 1;
     async function loadAssignedTickets() { try { const all = await apiCall('/requests'); assignedTickets = all.filter(t => t.assigned_to === user.id && t.created_by !== user.id); applyAssignedFilters(); } catch(err) { document.getElementById('assignedTicketsContainer').innerHTML = `<div class="empty-state">❌ Error: ${err.message}</div>`; } }
     function applyAssignedFilters() { const search = document.getElementById('assignedSearch').value.toLowerCase(); const status = document.getElementById('assignedStatusFilter').value; const category = document.getElementById('assignedCategoryFilter').value; const date = document.getElementById('assignedDateFilter').value; assignedFiltered = assignedTickets.filter(t => (t.ticket_number.toLowerCase().includes(search) || t.title.toLowerCase().includes(search)) && (!status || t.status===status) && (!category || t.category===category) && (!date || new Date(t.created_at).toISOString().slice(0,10)===date)); renderAssignedStats(); renderAssignedTickets(); }
-    function renderAssignedStats() { const total = assignedFiltered.length, pending = assignedFiltered.filter(t=>t.status==='pending_approval').length, approved = assignedFiltered.filter(t=>t.status==='approved').length, rejected = assignedFiltered.filter(t=>t.status==='rejected').length; document.getElementById('assignedStatsGrid').innerHTML = `<div class="stat-card" style="border-left-color:#F59E0B"><div class="stat-number">${total}</div><div class="stat-label">Total Tickets</div></div><div class="stat-card" style="border-left-color:#3B82F6"><div class="stat-number">${pending}</div><div class="stat-label">Pending</div></div><div class="stat-card" style="border-left-color:#10B981"><div class="stat-number">${approved}</div><div class="stat-label">Approved</div></div><div class="stat-card" style="border-left-color:#EF4444"><div class="stat-number">${rejected}</div><div class="stat-label">Rejected</div></div>`; }
-    function renderAssignedTickets() { const container = document.getElementById('assignedTicketsContainer'); if(!assignedFiltered.length) { container.innerHTML = `<div class="empty-state"><i class="fas fa-ticket-alt"></i><p>No tickets assigned</p></div>`; return; } const start=(currentAssignedPage-1)*5; const paginated=assignedFiltered.slice(start, start+5); let html=`<div class="table-container"><table class="tickets-table"><thead><th>Ticket #</th><th>Service</th><th>Title</th><th>Requester</th><th>Date</th><th>Status</th><th>Action</th></thead><tbody>`; for(const t of paginated){ html+=`<tr><td>${escapeHtml(t.ticket_number)}</td><td>${escapeHtml(t.category.replace('_',' '))}</td><td>${escapeHtml(t.title)}</td><td>${escapeHtml(t.requester_email||t.requester_name)}</td><td>${new Date(t.created_at).toLocaleDateString()}</td><td><span class="status-badge status-${t.status}">${t.status.replace('_',' ')}</span></td><td class="action-cell"><div class="action-buttons"><button class="action-btn view-btn" onclick="showTicketModal(${t.id})">View</button></div></td></tr>`; } html+=`</tbody></table><div id="assignedPagination" class="pagination"></div></div>`; container.innerHTML=html; const totalPages=Math.ceil(assignedFiltered.length/5); document.getElementById('assignedPagination').innerHTML=`<button onclick="assignedChangePage(-1)" ${currentAssignedPage===1?'disabled':''}>Prev</button><span>Page ${currentAssignedPage} of ${totalPages||1}</span><button onclick="assignedChangePage(1)" ${currentAssignedPage===totalPages||totalPages===0?'disabled':''}>Next</button>`; }
+    function renderAssignedStats() {
+        const total      = assignedFiltered.length;
+        const pending    = assignedFiltered.filter(t => t.status === 'pending_approval').length;
+        const inProgress = assignedFiltered.filter(t => t.status === 'in_progress').length;
+        const approved   = assignedFiltered.filter(t => t.status === 'approved').length;
+        const resolved   = assignedFiltered.filter(t => t.status === 'resolved').length;
+        const rejected   = assignedFiltered.filter(t => t.status === 'rejected').length;
+        document.getElementById('assignedStatsGrid').innerHTML = `
+            <div class="assigned-stat-card" style="border-left-color:#64748B">
+                <div class="assigned-stat-icon" style="background:#F1F5F9; color:#64748B"><i class="fas fa-layer-group"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${total}</div><div class="assigned-stat-label">Total Assigned</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#F59E0B">
+                <div class="assigned-stat-icon" style="background:#FEF9EC; color:#B45309"><i class="fas fa-clock"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${pending}</div><div class="assigned-stat-label">Pending</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#3B82F6">
+                <div class="assigned-stat-icon" style="background:#EFF6FF; color:#1D4ED8"><i class="fas fa-spinner"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${inProgress}</div><div class="assigned-stat-label">In Progress</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#10B981">
+                <div class="assigned-stat-icon" style="background:#ECFDF5; color:#065F46"><i class="fas fa-check-circle"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${approved}</div><div class="assigned-stat-label">Approved</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#22C55E">
+                <div class="assigned-stat-icon" style="background:#F0FDF4; color:#15803D"><i class="fas fa-check-double"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${resolved}</div><div class="assigned-stat-label">Resolved</div></div>
+            </div>
+            <div class="assigned-stat-card" style="border-left-color:#EF4444">
+                <div class="assigned-stat-icon" style="background:#FEF2F2; color:#B91C1C"><i class="fas fa-times-circle"></i></div>
+                <div class="assigned-stat-body"><div class="assigned-stat-number">${rejected}</div><div class="assigned-stat-label">Rejected</div></div>
+            </div>
+        `;
+    }
+    function renderAssignedTickets() {
+        const container = document.getElementById('assignedTicketsContainer');
+        if (!assignedFiltered.length) {
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox" style="font-size:2rem;margin-bottom:10px;display:block;color:#CBD5E1"></i><p>No tickets assigned to you</p></div>`;
+            return;
+        }
+
+        // helpers
+        const catIcon  = c => ({ repair:'fa-tools', ict:'fa-laptop-code', vehicle:'fa-car', aims:'fa-exchange-alt', asws_membership:'fa-id-card', asws_loan:'fa-hand-holding-usd' }[c] || 'fa-tag');
+        const catColor = c => ({ repair:'#F59E0B', ict:'#3B82F6', vehicle:'#8B5CF6', aims:'#06B6D4', asws_membership:'#10B981', asws_loan:'#EC4899' }[c] || '#64748B');
+        const catBg    = c => ({ repair:'#FEF3C7', ict:'#EFF6FF', vehicle:'#EDE9FE', aims:'#E0F7FA', asws_membership:'#DCFCE7', asws_loan:'#FCE7F3' }[c] || '#F1F5F9');
+
+        const start     = (currentAssignedPage - 1) * 5;
+        const paginated = assignedFiltered.slice(start, start + 5);
+
+        let rows = '';
+        for (const t of paginated) {
+            const icon  = catIcon(t.category);
+            const color = catColor(t.category);
+            const bg    = catBg(t.category);
+            const date  = new Date(t.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+            const requester = escapeHtml(t.requester_name || t.requester_email || '—');
+            rows += `
+                <tr>
+                    <td class="at-status-strip at-strip-${t.status}"></td>
+                    <td style="padding-left:10px">
+                        <div class="at-cat-icon" style="background:${bg}; color:${color}">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="at-ticket-meta">
+                            <span class="at-ticket-num">${escapeHtml(t.ticket_number)}</span>
+                            <span class="at-ticket-title">${escapeHtml(t.title)}</span>
+                        </div>
+                    </td>
+                    <td class="at-requester" title="${requester}">${requester}</td>
+                    <td class="at-date">${date}</td>
+                    <td><span class="status-badge status-${t.status}">${t.status.replace(/_/g,' ')}</span></td>
+                    <td>
+                        <button class="at-view-btn" onclick="showTicketModal(${t.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>`;
+        }
+
+        const totalPages = Math.ceil(assignedFiltered.length / 5);
+        container.innerHTML = `
+            <div class="assigned-table-wrap">
+                <div style="overflow-x:auto">
+                    <table class="assigned-table">
+                        <thead>
+                            <tr>
+                                <th style="width:4px; padding:0"></th>
+                                <th style="width:40px"></th>
+                                <th>Ticket / Title</th>
+                                <th>Requester</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div class="assigned-pagination">
+                    <button onclick="assignedChangePage(-1)" ${currentAssignedPage===1?'disabled':''}>&#8592; Prev</button>
+                    <span class="ap-page-info">Page ${currentAssignedPage} of ${totalPages||1}</span>
+                    <button onclick="assignedChangePage(1)" ${currentAssignedPage===totalPages||totalPages===0?'disabled':''}>Next &#8594;</button>
+                </div>
+            </div>`;
+    }
     window.assignedChangePage = (delta) => { currentAssignedPage += delta; renderAssignedTickets(); };
     document.getElementById('assignedSearch').addEventListener('input', ()=>{ currentAssignedPage=1; applyAssignedFilters(); });
     document.getElementById('assignedStatusFilter').addEventListener('change', ()=>{ currentAssignedPage=1; applyAssignedFilters(); });
@@ -667,40 +1232,343 @@
         driverSelect.removeEventListener('change', update); driverSelect.addEventListener('change', update); if(driverSelect.value) update();
     }
 
-    function renderModalTicket() {
-        const container = document.getElementById('modalContent'), ticket = currentModalTicket, fd = ticket.form_data || {}, allocation = fd.vehicle_allocation || null, hasAllocation = allocation && (allocation.vehicle_no || allocation.driver_name);
-        let allocationInfoHtml = '';
-        if(hasAllocation) allocationInfoHtml = `<div class="info-item"><span class="info-label">Allocated Vehicle No.</span><span class="info-value">${escapeHtml(allocation.vehicle_no||'-')}</span></div><div class="info-item"><span class="info-label">Allocated Vehicle Name</span><span class="info-value">${escapeHtml(allocation.vehicle_name||'-')}</span></div><div class="info-item"><span class="info-label">Allocated Driver</span><span class="info-value">${escapeHtml(allocation.driver_name||'-')}</span></div><div class="info-item"><span class="info-label">Driver Phone</span><span class="info-value">${escapeHtml(allocation.driver_phone||'-')}</span></div><div class="info-item"><span class="info-label">Allocated By</span><span class="info-value">${escapeHtml(allocation.allocated_by||'-')}</span></div><div class="info-item"><span class="info-label">Allocated At</span><span class="info-value">${allocation.allocated_at?new Date(allocation.allocated_at).toLocaleString():'-'}</span></div>`;
+    /* =========================================================
+       SIMPLE TICKET VIEW RENDERER
+       Goal: plain label/value layout, and GUARANTEE every piece
+       of data on the ticket is shown — including any keys in
+       form_data that aren't explicitly known about. Known
+       structures (requisitioner, trips, vehicle_allocation) get
+       a friendly layout; everything else still gets printed
+       automatically so nothing is ever silently dropped.
+       ========================================================= */
 
-        let requisitionerHtml = '';
-        if(fd.requisitioner) { const r=fd.requisitioner; requisitionerHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-user"></i> Requisitioned by</div><div class="info-grid"><div class="info-item"><span class="info-label">Name</span><span class="info-value">${escapeHtml(r.name||'-')}</span></div><div class="info-item"><span class="info-label">Designation</span><span class="info-value">${escapeHtml(r.designation||'-')}</span></div><div class="info-item"><span class="info-label">Division</span><span class="info-value">${escapeHtml(r.division||'-')}</span></div><div class="info-item"><span class="info-label">Email</span><span class="info-value">${escapeHtml(r.email||'-')}</span></div><div class="info-item"><span class="info-label">Phone</span><span class="info-value">${escapeHtml(r.phone||'-')}</span></div></div></div>`; }
+    // Fields we render "by hand" elsewhere, so the generic
+    // "anything else" pass at the end should skip these keys.
+    const TV_HANDLED_FORM_KEYS = new Set(['requisitioner', 'trips', 'start_date', 'end_date', 'vehicle_allocation']);
 
-        let itemsHtml = '';
-        if(ticket.category === 'vehicle' && fd.trips && fd.trips.length) {
-            const dateRangeHtml = `<div class="info-grid" style="margin-bottom:8px"><div class="info-item"><span class="info-label">Start Date</span><span class="info-value">${escapeHtml(fd.start_date||'-')}</span></div><div class="info-item"><span class="info-label">End Date</span><span class="info-value">${escapeHtml(fd.end_date||'-')}</span></div></div>`;
-            const tripsTable = `<table class="items-table"><thead><th>#</th><th>Place From</th><th>Place To</th><th>Officials</th><th>Purpose</th></thead><tbody>${fd.trips.map((trip,idx)=>`<tr><td>${idx+1}</td><td>${escapeHtml(trip.place_from||'')}</td><td>${escapeHtml(trip.place_to||'')}</td><td>${escapeHtml(trip.officials||'')}</td><td>${escapeHtml(trip.purpose||'')}</td></tr>`).join('')}</tbody></table>`;
-            let allocationFormHtml = '';
-            if(modalCanManage && !hasAllocation) {
-                const alloc = fd.vehicle_allocation || {};
-                let driverOptions = '<option value="">-- Select Driver --</option>'; for(const d of driversList) driverOptions += `<option value="${escapeHtml(d.name)}" data-id="${d.id}" ${d.name===alloc.driver_name?'selected':''}>${escapeHtml(d.name)}</option>`;
-                let vehicleNameOptions = '<option value="">-- Select Vehicle Name --</option>'; for(const v of vehiclesList) vehicleNameOptions += `<option value="${escapeHtml(v.vehicle_name)}" ${v.vehicle_name===alloc.vehicle_name?'selected':''}>${escapeHtml(v.vehicle_name)}</option>`;
-                let vehicleNumberOptions = '<option value="">-- Select Vehicle Number --</option>'; if(alloc.vehicle_name){ const vv = vehiclesList.find(v=>v.vehicle_name===alloc.vehicle_name); if(vv && vv.numbers.length) { vehicleNumberOptions = ''; for(const num of vv.numbers) vehicleNumberOptions += `<option value="${escapeHtml(num)}" ${num===alloc.vehicle_no?'selected':''}>${escapeHtml(num)}</option>`; } }
-                let phoneOptions = '<option value="">-- Select Phone --</option>'; if(alloc.driver_name){ const dd = driversList.find(d=>d.name===alloc.driver_name); if(dd && dd.phone) phoneOptions = `<option value="${escapeHtml(dd.phone)}" selected>${escapeHtml(dd.phone)}</option>`; }
-                allocationFormHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-truck"></i> Allocate Vehicle</div><div class="allocation-box"><div class="allocation-input-group"><label>Select Driver</label><select id="allocDriverSelect">${driverOptions}</select></div><div class="allocation-input-group"><label>Vehicle Name</label><select id="allocVehicleNameSelect">${vehicleNameOptions}</select></div><div class="allocation-input-group"><label>Vehicle Number</label><select id="allocVehicleNumberSelect">${vehicleNumberOptions}</select></div><div class="allocation-input-group"><label>Phone Number</label><select id="allocPhoneSelect">${phoneOptions}</select></div><button id="allocateBtn" class="btn-allocate">Allocate Vehicle</button></div></div>`;
-            }
-            itemsHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-calendar-alt"></i> Trip Period</div>${dateRangeHtml}</div><div class="modal-section"><div class="modal-section-title"><i class="fas fa-road"></i> Trips</div>${tripsTable}</div>${allocationFormHtml}`;
-        } else if(fd.items && fd.items.length) {
-            itemsHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-list"></i> Items requested</div><table class="items-table"><thead><th>#</th><th>Item Type</th><th>Quantity</th><th>Remarks</th></thead><tbody>${fd.items.map((item,idx)=>`<tr><td>${idx+1}</td><td>${escapeHtml(item.itemType||item.description||'')}</td><td>${escapeHtml(item.quantity||item.qty||'')}</td><td>${escapeHtml(item.remarks||'')}</td></tr>`).join('')}</tbody></table></div>`;
-        } else { const otherFields = Object.entries(fd).filter(([k])=>!['requisitioner','items','requisition_date','trips','start_date','end_date','vehicle_allocation'].includes(k)); if(otherFields.length) itemsHtml = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-info-circle"></i> Additional details</div><div class="info-grid">${otherFields.map(([k,v])=>`<div class="info-item"><span class="info-label">${escapeHtml(k)}</span><span class="info-value">${escapeHtml(String(v))}</span></div>`).join('')}</div></div>`; }
-
-        let statusClass = 'status-badge-lg'; if(ticket.status==='pending_approval') statusClass+=' status-pending_approval'; else if(ticket.status==='approved') statusClass+=' status-approved'; else if(ticket.status==='in_progress') statusClass+=' status-in_progress'; else if(ticket.status==='resolved') statusClass+=' status-resolved'; else if(ticket.status==='rejected') statusClass+=' status-rejected';
-        let statusHtml = `<span class="${statusClass}">${ticket.status.replace('_',' ')}</span>`;
-        let actionHtml = ''; if(modalCanManage) actionHtml = `<div class="action-bar"><select id="modalStatusSelect"><option value="pending_approval" ${ticket.status==='pending_approval'?'selected':''}>Pending Approval</option><option value="approved" ${ticket.status==='approved'?'selected':''}>Approved</option><option value="in_progress" ${ticket.status==='in_progress'?'selected':''}>In Progress</option><option value="resolved" ${ticket.status==='resolved'?'selected':''}>Resolved</option><option value="rejected" ${ticket.status==='rejected'?'selected':''}>Rejected</option></select><button id="modalUpdateStatusBtn" class="btn-primary-sm">Update Status</button>${ticket.status==='pending_approval'?'<button id="modalApproveBtn" class="btn-primary-sm" style="background:#10b981;">✅ Approve</button>':''}</div>`;
-        container.innerHTML = `<div class="modal-section"><div class="modal-section-title"><i class="fas fa-ticket-alt"></i> Ticket information</div><div class="info-grid"><div class="info-item"><span class="info-label">Ticket number</span><span class="info-value">${escapeHtml(ticket.ticket_number)}</span></div><div class="info-item"><span class="info-label">Title</span><span class="info-value">${escapeHtml(ticket.title)}</span></div><div class="info-item"><span class="info-label">Category</span><span class="info-value">${escapeHtml(ticket.category)}</span></div><div class="info-item"><span class="info-label">Requester</span><span class="info-value">${escapeHtml(ticket.requester_name||ticket.requester_email)}</span></div><div class="info-item"><span class="info-label">Created</span><span class="info-value">${new Date(ticket.created_at).toLocaleString()}</span></div><div class="info-item"><span class="info-label">Status</span><span class="info-value">${statusHtml}</span></div><div class="info-item"><span class="info-label">Priority</span><span class="info-value">${escapeHtml(ticket.priority)}</span></div><div class="info-item"><span class="info-label">Description</span><span class="info-value">${escapeHtml(ticket.description)}</span></div>${allocationInfoHtml}</div></div>${requisitionerHtml}${itemsHtml}${actionHtml}<div class="modal-section"><div class="modal-section-title"><i class="fas fa-comments"></i> Comments</div><div id="modalCommentsSection"></div></div><div class="modal-section"><div class="modal-section-title"><i class="fas fa-plus-circle"></i> Add comment</div><textarea id="modalNewComment" rows="3" placeholder="Write your message..."></textarea><div><label><input type="checkbox" id="modalInternalCheck"> Internal note (team only)</label></div><button id="modalSubmitCommentBtn" class="btn-primary-sm">Post Comment</button></div>`;
+    // Turns a snake_case / camelCase key into a readable label.
+    function tvLabelize(key) {
+        return String(key)
+            .replace(/_/g, ' ')
+            .replace(/([a-z])([A-Z])/g, '$1 $2')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/\b\w/g, c => c.toUpperCase());
     }
-    function renderModalComments(comments) { const ctn = document.getElementById('modalCommentsSection'); if(!comments.length) { ctn.innerHTML='<p style="color:#64748B;">No comments yet.</p>'; return; } let html=''; for(const c of comments){ if(c.is_internal && !modalCanManage && currentModalTicket.created_by===user.id) continue; html+=`<div class="comment ${c.is_internal?'internal-note':''}"><div class="comment-meta"><strong>${escapeHtml(c.author_name)}</strong> · ${new Date(c.created_at).toLocaleString()} ${c.isInternal?'🔒 Internal note':''}</div><div>${escapeHtml(c.message)}</div></div>`; } ctn.innerHTML=html||'<p>No public comments.</p>'; }
 
-    // ----- FIXED allocateVehicle: after success, close modal and reopen after a short delay -----
+    // Safely stringifies any value (string, number, boolean, 0,
+    // null, undefined, array, object) into something displayable.
+    // Unlike the old escapeHtml(), this never blanks out valid
+    // falsy values like 0 or false.
+    function tvDisplay(value) {
+        if (value === null || value === undefined || value === '') return null; // genuinely empty
+        if (Array.isArray(value)) {
+            if (!value.length) return null;
+            // Array of primitives -> comma list. Array of objects -> handled by caller as a table.
+            if (value.every(v => v === null || typeof v !== 'object')) {
+                return value.map(v => tvDisplay(v)).filter(v => v !== null).join(', ');
+            }
+            return null; // signal caller to use a table instead
+        }
+        if (typeof value === 'object') return null; // handled separately (nested rows)
+        return String(value);
+    }
+
+    // One label/value row. Always renders the label even if the value is empty,
+    // so it's visible that the field exists but has no data (never silently dropped).
+    function tvRow(label, value) {
+        const display = tvDisplay(value);
+        if (display === null) {
+            return `<div class="tv-row"><span class="tv-label">${escapeHtml(label)}</span><span class="tv-value empty">—</span></div>`;
+        }
+        return `<div class="tv-row"><span class="tv-label">${escapeHtml(label)}</span><span class="tv-value">${escapeHtml(display)}</span></div>`;
+    }
+
+    // Renders a flat object as a set of rows. If a nested value is itself an
+    // object/array of objects, it gets flattened with a prefixed label so it
+    // still shows up instead of disappearing.
+    function tvRowsForObject(obj, prefix) {
+        let html = '';
+        for (const key of Object.keys(obj)) {
+            const label = prefix ? `${prefix} – ${tvLabelize(key)}` : tvLabelize(key);
+            const val = obj[key];
+            if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+                html += tvRowsForObject(val, label);
+            } else if (Array.isArray(val) && val.length && val.every(v => v !== null && typeof v === 'object')) {
+                // array of objects nested unexpectedly: render each as its own mini-block
+                val.forEach((item, idx) => { html += tvRowsForObject(item, `${label} ${idx + 1}`); });
+            } else {
+                html += tvRow(label, val);
+            }
+        }
+        return html;
+    }
+
+    function renderModalTicket() {
+        const container = document.getElementById('modalContent');
+        const ticket = currentModalTicket;
+        const fd = ticket.form_data || {};
+        const allocation = fd.vehicle_allocation || null;
+        const hasAllocation = allocation && (allocation.vehicle_no || allocation.driver_name);
+        const isManager = modalCanManage;
+
+        // ----- 1. TICKET INFO (core fields, always shown) -----
+        let statusClass = 'tv-status status-' + (ticket.status || '');
+        let ticketInfoHtml = `
+            <div class="tv-section">
+                <div class="tv-heading"><i class="fas fa-ticket-alt"></i> Ticket Information</div>
+                ${tvRow('Ticket Number', ticket.ticket_number)}
+                ${tvRow('Title', ticket.title)}
+                ${tvRow('Category', ticket.category ? ticket.category.replace(/_/g, ' ') : ticket.category)}
+                <div class="tv-row"><span class="tv-label">Status</span><span class="tv-value"><span class="${statusClass}">${escapeHtml(ticket.status ? ticket.status.replace(/_/g, ' ') : '')}</span></span></div>
+                ${tvRow('Requester', ticket.requester_name || ticket.requester_email)}
+                ${tvRow('Requester Email', ticket.requester_email)}
+                ${tvRow('Created', ticket.created_at ? new Date(ticket.created_at).toLocaleString() : null)}
+                ${ticket.updated_at ? tvRow('Last Updated', new Date(ticket.updated_at).toLocaleString()) : ''}
+                ${tvRow('Priority', ticket.priority)}
+                ${tvRow('Assigned To', ticket.assigned_to_name || ticket.assigned_to)}
+                ${tvRow('Description', ticket.description)}
+            </div>
+        `;
+
+        // ----- 2. REQUISITIONER -----
+        let requisitionerHtml = '';
+        if (fd.requisitioner && typeof fd.requisitioner === 'object') {
+            const r = fd.requisitioner;
+            requisitionerHtml = `
+                <div class="tv-section">
+                    <div class="tv-heading"><i class="fas fa-user"></i> Requisitioned By</div>
+                    ${tvRow('Name', r.name)}
+                    ${tvRow('Designation', r.designation)}
+                    ${tvRow('Division', r.division)}
+                    ${tvRow('Email', r.email)}
+                    ${tvRow('Phone', r.phone)}
+                    ${tvRowsForObject(
+                        Object.fromEntries(Object.entries(r).filter(([k]) => !['name','designation','division','email','phone'].includes(k))),
+                        ''
+                    )}
+                </div>
+            `;
+        }
+
+        // ----- 3. TRIPS -----
+        let tripsHtml = '';
+        if (fd.trips && Array.isArray(fd.trips) && fd.trips.length) {
+            const dateRangeHtml = `
+                ${tvRow('Start Date', fd.start_date)}
+                ${tvRow('End Date', fd.end_date)}
+            `;
+            const tripsTableHtml = `
+                <table class="tv-table">
+                    <thead><tr><th>#</th><th>From</th><th>To</th><th>Officials</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        ${fd.trips.map((trip, idx) => `
+                            <tr>
+                                <td>${idx+1}</td>
+                                <td>${escapeHtml(trip.place_from)}</td>
+                                <td>${escapeHtml(trip.place_to)}</td>
+                                <td>${escapeHtml(trip.officials)}</td>
+                                <td>${escapeHtml(trip.purpose)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            tripsHtml = `
+                <div class="tv-section">
+                    <div class="tv-heading"><i class="fas fa-road"></i> Trip Details</div>
+                    ${dateRangeHtml}
+                    ${tripsTableHtml}
+                </div>
+            `;
+        } else if (fd.start_date || fd.end_date) {
+            // dates present without trips array — still show them
+            tripsHtml = `
+                <div class="tv-section">
+                    <div class="tv-heading"><i class="fas fa-road"></i> Trip Dates</div>
+                    ${tvRow('Start Date', fd.start_date)}
+                    ${tvRow('End Date', fd.end_date)}
+                </div>
+            `;
+        }
+
+        // ----- 4. ALLOCATION (display or form) -----
+        let allocationHtml = '';
+        if (hasAllocation) {
+            allocationHtml = `
+                <div class="tv-section">
+                    <div class="tv-heading"><i class="fas fa-truck"></i> Vehicle Allocation</div>
+                    ${tvRow('Driver', allocation.driver_name)}
+                    ${tvRow('Phone', allocation.driver_phone)}
+                    ${tvRow('Vehicle Name', allocation.vehicle_name)}
+                    ${tvRow('Vehicle No.', allocation.vehicle_no)}
+                    ${tvRow('Allocated By', allocation.allocated_by)}
+                    ${tvRow('Allocated At', allocation.allocated_at ? new Date(allocation.allocated_at).toLocaleString() : null)}
+                    ${tvRowsForObject(
+                        Object.fromEntries(Object.entries(allocation).filter(([k]) => !['driver_name','driver_phone','vehicle_name','vehicle_no','allocated_by','allocated_at','driver_id'].includes(k))),
+                        ''
+                    )}
+                </div>
+            `;
+        } else if (isManager && ticket.category === 'vehicle') {
+            const alloc = fd.vehicle_allocation || {};
+            let driverOptions = '<option value="">-- Select Driver --</option>';
+            for (const d of driversList) {
+                const selected = (d.name === alloc.driver_name) ? 'selected' : '';
+                driverOptions += `<option value="${escapeHtml(d.name)}" data-id="${d.id}" ${selected}>${escapeHtml(d.name)}</option>`;
+            }
+            let vehicleNameOptions = '<option value="">-- Select Vehicle Name --</option>';
+            for (const v of vehiclesList) {
+                const selected = (v.vehicle_name === alloc.vehicle_name) ? 'selected' : '';
+                vehicleNameOptions += `<option value="${escapeHtml(v.vehicle_name)}" ${selected}>${escapeHtml(v.vehicle_name)}</option>`;
+            }
+            let vehicleNumberOptions = '<option value="">-- Select Vehicle Number --</option>';
+            if (alloc.vehicle_name) {
+                const vv = vehiclesList.find(v => v.vehicle_name === alloc.vehicle_name);
+                if (vv && vv.numbers.length) {
+                    vehicleNumberOptions = '';
+                    for (const num of vv.numbers) {
+                        const selected = (num === alloc.vehicle_no) ? 'selected' : '';
+                        vehicleNumberOptions += `<option value="${escapeHtml(num)}" ${selected}>${escapeHtml(num)}</option>`;
+                    }
+                }
+            }
+            let phoneOptions = '<option value="">-- Select Phone --</option>';
+            if (alloc.driver_name) {
+                const dd = driversList.find(d => d.name === alloc.driver_name);
+                if (dd && dd.phone) {
+                    phoneOptions = `<option value="${escapeHtml(dd.phone)}" selected>${escapeHtml(dd.phone)}</option>`;
+                }
+            }
+            allocationHtml = `
+                <div class="tv-section">
+                    <div class="tv-heading"><i class="fas fa-truck"></i> Allocate Vehicle</div>
+                    <div class="allocation-box">
+                        <div class="allocation-input-group">
+                            <label>Driver</label>
+                            <select id="allocDriverSelect">${driverOptions}</select>
+                        </div>
+                        <div class="allocation-input-group">
+                            <label>Vehicle Name</label>
+                            <select id="allocVehicleNameSelect">${vehicleNameOptions}</select>
+                        </div>
+                        <div class="allocation-input-group">
+                            <label>Vehicle Number</label>
+                            <select id="allocVehicleNumberSelect">${vehicleNumberOptions}</select>
+                        </div>
+                        <div class="allocation-input-group">
+                            <label>Phone Number</label>
+                            <select id="allocPhoneSelect">${phoneOptions}</select>
+                        </div>
+                        <button id="allocateBtn" class="btn-allocate">Allocate Vehicle</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ----- 5. ANY OTHER FORM DATA (catch-all so nothing is ever missed) -----
+        let otherFormDataHtml = '';
+        const otherKeys = Object.keys(fd).filter(k => !TV_HANDLED_FORM_KEYS.has(k));
+        if (otherKeys.length) {
+            let rows = '';
+            for (const key of otherKeys) {
+                const val = fd[key];
+                if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+                    rows += tvRowsForObject(val, tvLabelize(key));
+                } else if (Array.isArray(val) && val.length && val.every(v => v !== null && typeof v === 'object')) {
+                    // array of objects: render as a simple table using the union of keys
+                    const cols = Array.from(val.reduce((set, item) => { Object.keys(item).forEach(k => set.add(k)); return set; }, new Set()));
+                    rows += `<div class="tv-row"><span class="tv-label">${escapeHtml(tvLabelize(key))}</span><span class="tv-value"></span></div>`;
+                    rows += `<table class="tv-table"><thead><tr>${cols.map(c => `<th>${escapeHtml(tvLabelize(c))}</th>`).join('')}</tr></thead><tbody>`;
+                    rows += val.map(item => `<tr>${cols.map(c => `<td>${escapeHtml(tvDisplay(item[c]) ?? '—')}</td>`).join('')}</tr>`).join('');
+                    rows += `</tbody></table>`;
+                } else {
+                    rows += tvRow(tvLabelize(key), val);
+                }
+            }
+            otherFormDataHtml = `
+                <div class="tv-section">
+                    <div class="tv-heading"><i class="fas fa-list"></i> Additional Details</div>
+                    ${rows}
+                </div>
+            `;
+        }
+
+        // ----- 6. ACTION BAR (managers only) -----
+        let actionHtml = '';
+        if (isManager) {
+            actionHtml = `
+                <div class="tv-section">
+                    <div class="action-bar">
+                        <select id="modalStatusSelect">
+                            <option value="pending_approval" ${ticket.status === 'pending_approval' ? 'selected' : ''}>Pending Approval</option>
+                            <option value="approved" ${ticket.status === 'approved' ? 'selected' : ''}>Approved</option>
+                            <option value="in_progress" ${ticket.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="resolved" ${ticket.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                            <option value="rejected" ${ticket.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                        </select>
+                        <button id="modalUpdateStatusBtn" class="btn-primary-sm">Update Status</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ----- 7. COMMENTS -----
+        let commentsSectionHtml = `
+            <div class="tv-section">
+                <div class="tv-heading"><i class="fas fa-comments"></i> Comments</div>
+                <div id="modalCommentsSection"></div>
+            </div>
+        `;
+
+        // ----- 8. ADD COMMENT -----
+        let addCommentHtml = `
+            <div class="tv-section">
+                <div class="tv-heading"><i class="fas fa-plus-circle"></i> Add Comment</div>
+                <textarea id="modalNewComment" rows="3" placeholder="Write your message..."></textarea>
+                <div style="margin: 8px 0;">
+                    <label><input type="checkbox" id="modalInternalCheck"> Internal note (team only)</label>
+                </div>
+                <button id="modalSubmitCommentBtn" class="btn-primary-sm">Post Comment</button>
+            </div>
+        `;
+
+        // ----- Assemble all -----
+        container.innerHTML = `
+            ${ticketInfoHtml}
+            ${requisitionerHtml}
+            ${tripsHtml}
+            ${allocationHtml}
+            ${otherFormDataHtml}
+            ${actionHtml}
+            ${commentsSectionHtml}
+            ${addCommentHtml}
+        `;
+    }
+
+    // renderModalComments remains unchanged
+    function renderModalComments(comments) {
+        const ctn = document.getElementById('modalCommentsSection');
+        if (!ctn) return;
+        if (!comments.length) {
+            ctn.innerHTML = '<p style="color:#64748B;">No comments yet.</p>';
+            return;
+        }
+        let html = '';
+        for (const c of comments) {
+            if (c.is_internal && !modalCanManage && currentModalTicket.created_by === user.id) continue;
+            const noteClass = c.is_internal ? 'internal-note' : '';
+            html += `
+                <div class="comment ${noteClass}">
+                    <div class="comment-meta"><strong>${escapeHtml(c.author_name)}</strong> · ${new Date(c.created_at).toLocaleString()} ${c.is_internal ? '🔒 Internal note' : ''}</div>
+                    <div>${escapeHtml(c.message)}</div>
+                </div>
+            `;
+        }
+        ctn.innerHTML = html || '<p>No public comments.</p>';
+    }
+
+    // ----- allocateVehicle with modal refresh -----
     async function allocateVehicle() {
         const driverSelect = document.getElementById('allocDriverSelect'), driverName = driverSelect?driverSelect.value:'';
         const vnSelect = document.getElementById('allocVehicleNameSelect'), vehicleName = vnSelect?vnSelect.value:'';
@@ -732,18 +1600,62 @@
 
     function attachModalEventListeners() {
         if(modalCanManage) {
-            const upBtn = document.getElementById('modalUpdateStatusBtn'); if(upBtn) upBtn.onclick = async () => { await apiCall(`/requests/${currentModalTicket.id}/status`,{method:'PUT',body:JSON.stringify({status:document.getElementById('modalStatusSelect').value})}); if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets(); else loadAssignedTickets(); showTicketModal(currentModalTicket.id); };
-            const appBtn = document.getElementById('modalApproveBtn'); if(appBtn) appBtn.onclick = async () => { await apiCall(`/requests/${currentModalTicket.id}/approve`,{method:'PUT'}); if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets(); else loadAssignedTickets(); showTicketModal(currentModalTicket.id); };
-            const allocBtn = document.getElementById('allocateBtn'); if(allocBtn) { allocBtn.onclick = allocateVehicle; setupDynamicVehicleNumber(); setupDriverPhoneAutoFill(); }
+            const upBtn = document.getElementById('modalUpdateStatusBtn');
+            if(upBtn) {
+                upBtn.onclick = async () => {
+                    const newStatus = document.getElementById('modalStatusSelect').value;
+                    await apiCall(`/requests/${currentModalTicket.id}/status`, { method:'PUT', body:JSON.stringify({ status:newStatus }) });
+                    if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets();
+                    else loadAssignedTickets();
+                    showTicketModal(currentModalTicket.id);
+                };
+            }
+            // The approve button is removed, so no event listener needed.
+            const allocBtn = document.getElementById('allocateBtn');
+            if(allocBtn) {
+                allocBtn.onclick = allocateVehicle;
+                setupDynamicVehicleNumber();
+                setupDriverPhoneAutoFill();
+            }
         }
-        const subBtn = document.getElementById('modalSubmitCommentBtn'); if(subBtn) subBtn.onclick = async () => { const msg = document.getElementById('modalNewComment').value.trim(); if(!msg) return alert('Enter comment'); const isInt = document.getElementById('modalInternalCheck').checked; await apiCall(`/requests/${currentModalTicket.id}/comment`,{method:'POST',body:JSON.stringify({message:msg,is_internal:isInt})}); document.getElementById('modalNewComment').value=''; document.getElementById('modalInternalCheck').checked=false; if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets(); else loadAssignedTickets(); showTicketModal(currentModalTicket.id); };
+        const subBtn = document.getElementById('modalSubmitCommentBtn');
+        if(subBtn) {
+            subBtn.onclick = async () => {
+                const msg = document.getElementById('modalNewComment').value.trim();
+                if(!msg) return alert('Enter comment');
+                const isInt = document.getElementById('modalInternalCheck').checked;
+                await apiCall(`/requests/${currentModalTicket.id}/comment`, { method:'POST', body:JSON.stringify({ message:msg, is_internal:isInt }) });
+                document.getElementById('modalNewComment').value = '';
+                document.getElementById('modalInternalCheck').checked = false;
+                if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets();
+                else loadAssignedTickets();
+                showTicketModal(currentModalTicket.id);
+            };
+        }
     }
 
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+    // Fixed: previously `if(!str) return ''` blanked out valid falsy
+    // values like 0 or false. Now only null/undefined become ''.
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+    }
     async function updateNotificationCount() { try { const notifs = await apiCall('/notifications'); const badge = document.querySelector('#notificationBell .badge'); if(badge) { badge.textContent = notifs.length; badge.style.display = notifs.length ? 'inline-flex' : 'none'; } } catch(e){} }
     document.getElementById('notificationBell').addEventListener('click', async () => { const notifs = await apiCall('/notifications'); if(!notifs.length) { alert('No new notifications'); return; } let msg = 'Notifications:\n'+notifs.map(n=>`- ${n.message}`).join('\n'); if(confirm(msg+'\nMark all as read?')) { await apiCall('/notifications/mark-read',{method:'POST',body:JSON.stringify({})}); updateNotificationCount(); } });
     setInterval(updateNotificationCount,30000); updateNotificationCount();
-    function updateWelcomeAndDate() { const hour = new Date().getHours(); let greeting = 'Good morning'; if(hour>=12 && hour<18) greeting='Good afternoon'; else if(hour>=18) greeting='Good evening'; const userName = user.full_name?.split(' ')[0] || 'Manager'; const today = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); document.getElementById('dashboardGreeting').innerHTML = `${greeting}, <span id="dashboardWelcomeName">${userName}</span> `; document.getElementById('dashboardDate').innerText = today; document.getElementById('assignedGreeting').innerHTML = `${greeting}, <span id="assignedWelcomeName">${userName}</span> `; document.getElementById('assignedDate').innerText = today; }
+    function updateWelcomeAndDate() {
+        const hour = new Date().getHours();
+        let greeting = 'Good morning';
+        if (hour >= 12 && hour < 18) greeting = 'Good afternoon';
+        else if (hour >= 18) greeting = 'Good evening';
+        const userName = user.full_name?.split(' ')[0] || 'Manager';
+        const today = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+        // Dashboard pane – personalised greeting + date
+        document.getElementById('dashboardGreeting').innerHTML = `${greeting}, ${userName}`;
+        document.getElementById('dashboardDate').innerText = today;
+        // Assigned pane – heading is static; just set the date
+        document.getElementById('assignedDate').innerText = today;
+    }
     updateWelcomeAndDate(); loadDashboardTickets();
 </script>
 </body>

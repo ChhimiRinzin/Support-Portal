@@ -456,7 +456,9 @@
 
             alert(`✅ Request submitted! Ticket: ${result.ticket_number}`);
 
-            window.location.href = 'dashboard.html';
+            // Redirect based on role
+            const dashboardUrl = currentUser.is_manager ? 'manager-dashboard.html' : 'dashboard.html';
+            window.location.href = dashboardUrl;
 
         } catch (err) {
 

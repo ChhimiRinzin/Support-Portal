@@ -23,29 +23,37 @@ router.get('/', async (req, res) => {
             [userId]
         );
         const managedCategories = perms.rows.map(row => row.category);
-        // console.log(`User ${userId} manages categories:`, managedCategories); // REMOVED to stop console spam
+
+        // Always get tickets created by the user
+        const ownTicketsQuery = `
+            SELECT r.id, r.ticket_number, r.category, r.title, r.description, r.form_data, r.status, r.priority, r.attachments, r.created_by, r.assigned_to, r.created_at, r.updated_at, r.resolved_at,
+                   u.full_name as requester_name, u.email as requester_email
+            FROM service_requests r
+            JOIN users u ON r.created_by = u.id
+            WHERE r.created_by = $1
+        `;
 
         let result;
         if (managedCategories.length > 0) {
-            // Manager: return tickets of managed categories
-            result = await pool.query(`
+            // Also get tickets from managed categories where user is NOT the creator
+            const managedQuery = `
                 SELECT r.id, r.ticket_number, r.category, r.title, r.description, r.form_data, r.status, r.priority, r.attachments, r.created_by, r.assigned_to, r.created_at, r.updated_at, r.resolved_at,
                        u.full_name as requester_name, u.email as requester_email
                 FROM service_requests r
                 JOIN users u ON r.created_by = u.id
-                WHERE r.category = ANY($1)
+                WHERE r.category = ANY($1) AND r.created_by != $2
                 ORDER BY r.created_at DESC
-            `, [managedCategories]);
+            `;
+            const ownResult = await pool.query(ownTicketsQuery, [userId]);
+            const managedResult = await pool.query(managedQuery, [managedCategories, userId]);
+            // Combine both sets
+            const combined = [...ownResult.rows, ...managedResult.rows];
+            // Sort by created_at descending
+            combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            result = { rows: combined };
         } else {
             // Regular user: only their own tickets
-            result = await pool.query(`
-                SELECT r.id, r.ticket_number, r.category, r.title, r.description, r.form_data, r.status, r.priority, r.attachments, r.created_by, r.assigned_to, r.created_at, r.updated_at, r.resolved_at,
-                       u.full_name as requester_name, u.email as requester_email
-                FROM service_requests r
-                JOIN users u ON r.created_by = u.id
-                WHERE r.created_by = $1
-                ORDER BY r.created_at DESC
-            `, [userId]);
+            result = await pool.query(ownTicketsQuery, [userId]);
         }
         res.json(result.rows);
     } catch (err) {
