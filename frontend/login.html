@@ -110,7 +110,15 @@
             if (!response.ok) throw new Error(data.message);
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
-            if (data.user.is_manager === true) {
+
+            // ---- REDIRECT LOGIC ----
+            // Redirect to manager dashboard if user is:
+            // - a manager (is_manager = true)
+            // - a division head (is_division_head = true)
+            // - an admin (role === 'admin')
+            // - a vehicle allocator (is_vehicle_allocator = true)
+            const user = data.user;
+            if (user.is_manager || user.is_division_head || user.role === 'admin' || user.is_vehicle_allocator) {
                 window.location.href = 'manager-dashboard.html';
             } else {
                 window.location.href = 'dashboard.html';

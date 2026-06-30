@@ -908,6 +908,7 @@
     if (!user || !user.id) window.location.href = 'index.html';
     document.getElementById('userName').innerText = user.full_name || user.email?.split('@')[0] || 'Manager';
     document.getElementById('userAvatar').innerText = (user.full_name || 'U').charAt(0).toUpperCase();
+    const isVehicleAdmin = user.is_vehicle_allocator || false;
     document.getElementById('logoutBtnSidebar').onclick = () => { localStorage.clear(); window.location.href = 'index.html'; };
     document.getElementById('settingsBtnSidebar').onclick = () => { window.location.href = 'settings.html'; };
     const menuToggle = document.getElementById('menuToggle');
@@ -1411,59 +1412,68 @@
                 </div>
             `;
         } else if (isManager && ticket.category === 'vehicle') {
-            const alloc = fd.vehicle_allocation || {};
-            let driverOptions = '<option value="">-- Select Driver --</option>';
-            for (const d of driversList) {
-                const selected = (d.name === alloc.driver_name) ? 'selected' : '';
-                driverOptions += `<option value="${escapeHtml(d.name)}" data-id="${d.id}" ${selected}>${escapeHtml(d.name)}</option>`;
-            }
-            let vehicleNameOptions = '<option value="">-- Select Vehicle Name --</option>';
-            for (const v of vehiclesList) {
-                const selected = (v.vehicle_name === alloc.vehicle_name) ? 'selected' : '';
-                vehicleNameOptions += `<option value="${escapeHtml(v.vehicle_name)}" ${selected}>${escapeHtml(v.vehicle_name)}</option>`;
-            }
-            let vehicleNumberOptions = '<option value="">-- Select Vehicle Number --</option>';
-            if (alloc.vehicle_name) {
-                const vv = vehiclesList.find(v => v.vehicle_name === alloc.vehicle_name);
-                if (vv && vv.numbers.length) {
-                    vehicleNumberOptions = '';
-                    for (const num of vv.numbers) {
-                        const selected = (num === alloc.vehicle_no) ? 'selected' : '';
-                        vehicleNumberOptions += `<option value="${escapeHtml(num)}" ${selected}>${escapeHtml(num)}</option>`;
+            if (isVehicleAdmin && ticket.status === 'approved') {
+                const alloc = fd.vehicle_allocation || {};
+                let driverOptions = '<option value="">-- Select Driver --</option>';
+                for (const d of driversList) {
+                    const selected = (d.name === alloc.driver_name) ? 'selected' : '';
+                    driverOptions += `<option value="${escapeHtml(d.name)}" data-id="${d.id}" ${selected}>${escapeHtml(d.name)}</option>`;
+                }
+                let vehicleNameOptions = '<option value="">-- Select Vehicle Name --</option>';
+                for (const v of vehiclesList) {
+                    const selected = (v.vehicle_name === alloc.vehicle_name) ? 'selected' : '';
+                    vehicleNameOptions += `<option value="${escapeHtml(v.vehicle_name)}" ${selected}>${escapeHtml(v.vehicle_name)}</option>`;
+                }
+                let vehicleNumberOptions = '<option value="">-- Select Vehicle Number --</option>';
+                if (alloc.vehicle_name) {
+                    const vv = vehiclesList.find(v => v.vehicle_name === alloc.vehicle_name);
+                    if (vv && vv.numbers.length) {
+                        vehicleNumberOptions = '';
+                        for (const num of vv.numbers) {
+                            const selected = (num === alloc.vehicle_no) ? 'selected' : '';
+                            vehicleNumberOptions += `<option value="${escapeHtml(num)}" ${selected}>${escapeHtml(num)}</option>`;
+                        }
                     }
                 }
-            }
-            let phoneOptions = '<option value="">-- Select Phone --</option>';
-            if (alloc.driver_name) {
-                const dd = driversList.find(d => d.name === alloc.driver_name);
-                if (dd && dd.phone) {
-                    phoneOptions = `<option value="${escapeHtml(dd.phone)}" selected>${escapeHtml(dd.phone)}</option>`;
+                let phoneOptions = '<option value="">-- Select Phone --</option>';
+                if (alloc.driver_name) {
+                    const dd = driversList.find(d => d.name === alloc.driver_name);
+                    if (dd && dd.phone) {
+                        phoneOptions = `<option value="${escapeHtml(dd.phone)}" selected>${escapeHtml(dd.phone)}</option>`;
+                    }
                 }
-            }
-            allocationHtml = `
-                <div class="tv-section">
-                    <div class="tv-heading"><i class="fas fa-truck"></i> Allocate Vehicle</div>
-                    <div class="allocation-box">
-                        <div class="allocation-input-group">
-                            <label>Driver</label>
-                            <select id="allocDriverSelect">${driverOptions}</select>
+                allocationHtml = `
+                    <div class="tv-section">
+                        <div class="tv-heading"><i class="fas fa-truck"></i> Allocate Vehicle</div>
+                        <div class="allocation-box">
+                            <div class="allocation-input-group">
+                                <label>Driver</label>
+                                <select id="allocDriverSelect">${driverOptions}</select>
+                            </div>
+                            <div class="allocation-input-group">
+                                <label>Vehicle Name</label>
+                                <select id="allocVehicleNameSelect">${vehicleNameOptions}</select>
+                            </div>
+                            <div class="allocation-input-group">
+                                <label>Vehicle Number</label>
+                                <select id="allocVehicleNumberSelect">${vehicleNumberOptions}</select>
+                            </div>
+                            <div class="allocation-input-group">
+                                <label>Phone Number</label>
+                                <select id="allocPhoneSelect">${phoneOptions}</select>
+                            </div>
+                            <button id="allocateBtn" class="btn-allocate">Allocate Vehicle</button>
                         </div>
-                        <div class="allocation-input-group">
-                            <label>Vehicle Name</label>
-                            <select id="allocVehicleNameSelect">${vehicleNameOptions}</select>
-                        </div>
-                        <div class="allocation-input-group">
-                            <label>Vehicle Number</label>
-                            <select id="allocVehicleNumberSelect">${vehicleNumberOptions}</select>
-                        </div>
-                        <div class="allocation-input-group">
-                            <label>Phone Number</label>
-                            <select id="allocPhoneSelect">${phoneOptions}</select>
-                        </div>
-                        <button id="allocateBtn" class="btn-allocate">Allocate Vehicle</button>
                     </div>
-                </div>
-            `;
+                `;
+            } else if (!isVehicleAdmin && ticket.status === 'approved' && !hasAllocation) {
+                allocationHtml = `
+                    <div class="tv-section">
+                        <div class="tv-heading"><i class="fas fa-truck"></i> Vehicle Allocation</div>
+                        <p style="color:#64748B; font-size:0.9rem; padding: 8px 0;">This request has been approved and is waiting for vehicle allocation by the transport admin.</p>
+                    </div>
+                `;
+            }
         }
 
         // ----- 5. ANY OTHER FORM DATA (catch-all so nothing is ever missed) -----
@@ -1497,20 +1507,48 @@
         // ----- 6. ACTION BAR (managers only) -----
         let actionHtml = '';
         if (isManager) {
-            actionHtml = `
-                <div class="tv-section">
-                    <div class="action-bar">
-                        <select id="modalStatusSelect">
-                            <option value="pending_approval" ${ticket.status === 'pending_approval' ? 'selected' : ''}>Pending Approval</option>
-                            <option value="approved" ${ticket.status === 'approved' ? 'selected' : ''}>Approved</option>
-                            <option value="in_progress" ${ticket.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-                            <option value="resolved" ${ticket.status === 'resolved' ? 'selected' : ''}>Resolved</option>
-                            <option value="rejected" ${ticket.status === 'rejected' ? 'selected' : ''}>Rejected</option>
-                        </select>
-                        <button id="modalUpdateStatusBtn" class="btn-primary-sm">Update Status</button>
+            const isAssignedApprover = (ticket.assigned_to === user.id);
+            const isPending = (ticket.status === 'pending_approval');
+            // Vehicle tickets that are still pending approval go through a
+            // dedicated Approve/Reject flow (handles forwarding to the
+            // vehicle allocator). The generic status dropdown is hidden in
+            // this case so there is only ONE way to approve — selecting
+            // "approved" from the dropdown does NOT forward the ticket and
+            // previously caused tickets to get stuck after "approval".
+            const useApproveRejectFlow = (ticket.category === 'vehicle' && isAssignedApprover && isPending);
+
+            if (useApproveRejectFlow) {
+                actionHtml = `
+                    <div class="tv-section">
+                        <div class="action-bar">
+                            <button id="modalApproveBtn" class="btn-primary-sm" style="background:#10B981;">✅ Approve</button>
+                            <button id="modalRejectBtn" class="btn-primary-sm" style="background:#EF4444;">✖ Reject</button>
+                        </div>
+                        <div id="modalRejectReasonBox" style="display:none; margin-top:12px;">
+                            <textarea id="modalRejectReason" rows="2" placeholder="Reason for rejection (optional, shared with requester)"></textarea>
+                            <div style="display:flex; gap:8px;">
+                                <button id="modalConfirmRejectBtn" class="btn-primary-sm" style="background:#EF4444;">Confirm Reject</button>
+                                <button id="modalCancelRejectBtn" class="btn-primary-sm" style="background:#9AA6B5;">Cancel</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                actionHtml = `
+                    <div class="tv-section">
+                        <div class="action-bar">
+                            <select id="modalStatusSelect">
+                                <option value="pending_approval" ${ticket.status === 'pending_approval' ? 'selected' : ''}>Pending Approval</option>
+                                <option value="approved" ${ticket.status === 'approved' ? 'selected' : ''}>Approved</option>
+                                <option value="in_progress" ${ticket.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="resolved" ${ticket.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                                <option value="rejected" ${ticket.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                            </select>
+                            <button id="modalUpdateStatusBtn" class="btn-primary-sm">Update Status</button>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         // ----- 7. COMMENTS -----
@@ -1598,22 +1636,72 @@
         } catch(err) { alert('Allocation failed: '+err.message); }
     }
 
+    // Wraps a button's async click handler so the button disables itself
+    // immediately on click (preventing double-submission from a second
+    // click before the request resolves) and shows a "Processing..." label.
+    // On success the modal is normally closed/refreshed anyway; on error
+    // the button is re-enabled and restored so the user can retry.
+    function runOnce(btn, label, handler) {
+        btn.onclick = async () => {
+            if (btn.disabled) return;
+            btn.disabled = true;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = label;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+            try {
+                await handler();
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                btn.style.opacity = '';
+                btn.style.cursor = '';
+                alert('Action failed: ' + err.message);
+            }
+        };
+    }
+
     function attachModalEventListeners() {
         if(modalCanManage) {
             const upBtn = document.getElementById('modalUpdateStatusBtn');
             if(upBtn) {
-                upBtn.onclick = async () => {
+                runOnce(upBtn, 'Updating…', async () => {
                     const newStatus = document.getElementById('modalStatusSelect').value;
                     await apiCall(`/requests/${currentModalTicket.id}/status`, { method:'PUT', body:JSON.stringify({ status:newStatus }) });
                     if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets();
                     else loadAssignedTickets();
                     showTicketModal(currentModalTicket.id);
-                };
+                });
             }
-            // The approve button is removed, so no event listener needed.
+            const appBtn = document.getElementById('modalApproveBtn');
+            if(appBtn) {
+                runOnce(appBtn, '✅ Approving…', async () => {
+                    await apiCall(`/requests/${currentModalTicket.id}/approve`, { method:'PUT' });
+                    if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets();
+                    else loadAssignedTickets();
+                    showTicketModal(currentModalTicket.id);
+                });
+            }
+            const rejBtn = document.getElementById('modalRejectBtn');
+            const rejBox = document.getElementById('modalRejectReasonBox');
+            if(rejBtn && rejBox) {
+                rejBtn.onclick = () => { rejBox.style.display = 'block'; rejBtn.style.display = 'none'; };
+                const cancelBtn = document.getElementById('modalCancelRejectBtn');
+                if(cancelBtn) cancelBtn.onclick = () => { rejBox.style.display = 'none'; rejBtn.style.display = 'inline-flex'; };
+                const confirmBtn = document.getElementById('modalConfirmRejectBtn');
+                if(confirmBtn) {
+                    runOnce(confirmBtn, 'Rejecting…', async () => {
+                        const reason = document.getElementById('modalRejectReason').value.trim();
+                        await apiCall(`/requests/${currentModalTicket.id}/reject`, { method:'PUT', body:JSON.stringify({ reason }) });
+                        if(document.getElementById('dashboardPane').classList.contains('active')) loadDashboardTickets();
+                        else loadAssignedTickets();
+                        showTicketModal(currentModalTicket.id);
+                    });
+                }
+            }
             const allocBtn = document.getElementById('allocateBtn');
             if(allocBtn) {
-                allocBtn.onclick = allocateVehicle;
+                runOnce(allocBtn, 'Allocating…', allocateVehicle);
                 setupDynamicVehicleNumber();
                 setupDriverPhoneAutoFill();
             }

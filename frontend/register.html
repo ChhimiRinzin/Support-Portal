@@ -43,7 +43,7 @@
         .text-muted { color: #6c7a89; font-size: 14px; margin-bottom: 24px; }
         .form-group { margin-bottom: 18px; text-align: left; position: relative; }
         label { font-size: 13px; font-weight: 500; color: #334155; display: block; margin-bottom: 6px; }
-        input {
+        input, select {
             width: 100%;
             padding: 12px 16px;
             border: 1px solid #e2e8f0;
@@ -52,13 +52,13 @@
             background: #f8fafc;
             transition: 0.2s;
         }
-        input:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #2d6a4f;
             box-shadow: 0 0 0 3px rgba(45,106,79,0.1);
             background: white;
         }
-        input.error {
+        input.error, select.error {
             border-color: #ef4444;
             background-color: #fef2f2;
         }
@@ -68,9 +68,7 @@
             margin-top: 4px;
             display: none;
         }
-        .error-text.show {
-            display: block;
-        }
+        .error-text.show { display: block; }
         .btn-primary {
             background: linear-gradient(135deg, #2d6a4f, #1b5e3f);
             color: white;
@@ -89,7 +87,6 @@
         a { color: #2d6a4f; text-decoration: none; }
         a:hover { text-decoration: underline; }
         .form-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
-        /* Modal popup */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -111,11 +108,7 @@
             width: 90%;
             box-shadow: 0 20px 35px -8px rgba(0,0,0,0.3);
         }
-        .modal-box i {
-            font-size: 48px;
-            display: block;
-            margin-bottom: 16px;
-        }
+        .modal-box i { font-size: 48px; display: block; margin-bottom: 16px; }
         .modal-box.success i { color: #10b981; }
         .modal-box.error i { color: #ef4444; }
         .modal-box button {
@@ -126,6 +119,9 @@
             padding: 8px 24px;
             border-radius: 30px;
             cursor: pointer;
+        }
+        @media (max-width: 480px) {
+            .register-card { padding: 24px; }
         }
     </style>
 </head>
@@ -151,9 +147,28 @@
             <label>Designation</label>
             <input type="text" id="designation" placeholder="e.g., Senior Auditor">
         </div>
+        <!-- Division dropdown -->
         <div class="form-group">
-            <label>Division</label>
-            <input type="text" id="division" placeholder="e.g., SoCD">
+            <label>Division *</label>
+            <select id="division" required>
+                <option value="">Select your division</option>
+                <option value="Policy and Planning Division">Policy and Planning Division</option>
+                <option value="Support Services and International Relations Division">Support Services and International Relations Division</option>
+                <option value="Professional Development Centre">Professional Development Centre</option>
+                <option value="Compliance and Outsourced Audit Division">Compliance and Outsourced Audit Division</option>
+                <option value="Governance Cluster Division">Governance Cluster Division</option>
+                <option value="Performance Audit Division">Performance Audit Division</option>
+                <option value="Economic Cluster Division">Economic Cluster Division</option>
+                <option value="Security Cluster Division">Security Cluster Division</option>
+                <option value="Social Cluster Division">Social Cluster Division</option>
+                <option value="Follow-up and Legal Services Division">Follow-up and Legal Services Division</option>
+                <option value="Social Cluster Division">Smart Audit Platform Project</option>
+                <option value="Office of the Assistant Auditor General, Bumthang">Office of the Assistant Auditor General, Bumthang</option>
+                <option value="Office of the Assistant Auditor General, Phuentsholing">Office of the Assistant Auditor General, Phuentsholing</option>
+                <option value="Office of the Assistant Auditor General, Samdrup Jongkhar">Office of the Assistant Auditor General, Samdrup Jongkhar</option>
+                <option value="Office of the Assistant Auditor General, Tsirang">Office of the Assistant Auditor General, Tsirang</option>
+            </select>
+            <div class="error-text" id="divisionError">Please select your division.</div>
         </div>
         <div class="form-group">
             <label>Password *</label>
@@ -177,14 +192,16 @@
     // DOM elements
     const fullNameInput = document.getElementById('fullName');
     const emailInput = document.getElementById('email');
+    const divisionSelect = document.getElementById('division');
     const passwordInput = document.getElementById('password');
     const confirmInput = document.getElementById('confirmPassword');
     const fullNameError = document.getElementById('fullNameError');
     const emailError = document.getElementById('emailError');
+    const divisionError = document.getElementById('divisionError');
     const passwordError = document.getElementById('passwordError');
     const confirmError = document.getElementById('confirmError');
 
-    // Helper: show/hide error and mark input as error
+    // Helper: show/hide error
     function setError(input, errorDiv, message, isValid) {
         if (!isValid) {
             input.classList.add('error');
@@ -212,7 +229,15 @@
         return isValid;
     }
 
-    // Validate password length
+    // Validate division selection
+    function validateDivision() {
+        const value = divisionSelect.value;
+        const isValid = value !== '';
+        setError(divisionSelect, divisionError, 'Please select your division.', isValid);
+        return isValid;
+    }
+
+    // Validate password
     function validatePassword() {
         const value = passwordInput.value;
         const isValid = value.length >= 6;
@@ -220,7 +245,7 @@
         return isValid;
     }
 
-    // Validate confirm password match
+    // Validate confirm password
     function validateConfirm() {
         const password = passwordInput.value;
         const confirm = confirmInput.value;
@@ -234,12 +259,14 @@
     fullNameInput.addEventListener('blur', validateFullName);
     emailInput.addEventListener('input', validateEmail);
     emailInput.addEventListener('blur', validateEmail);
+    divisionSelect.addEventListener('change', validateDivision);
+    divisionSelect.addEventListener('blur', validateDivision);
     passwordInput.addEventListener('input', () => { validatePassword(); validateConfirm(); });
     passwordInput.addEventListener('blur', () => { validatePassword(); validateConfirm(); });
     confirmInput.addEventListener('input', validateConfirm);
     confirmInput.addEventListener('blur', validateConfirm);
 
-    // Modal function (unchanged)
+    // Modal function
     function showModal(message, type = 'success', redirectUrl = null) {
         const existing = document.querySelector('.modal-overlay');
         if (existing) existing.remove();
@@ -270,10 +297,11 @@
         // Run all validations
         const isFullNameValid = validateFullName();
         const isEmailValid = validateEmail();
+        const isDivisionValid = validateDivision();
         const isPasswordValid = validatePassword();
         const isConfirmValid = validateConfirm();
 
-        if (!isFullNameValid || !isEmailValid || !isPasswordValid || !isConfirmValid) {
+        if (!isFullNameValid || !isEmailValid || !isDivisionValid || !isPasswordValid || !isConfirmValid) {
             showModal('Please correct the errors in the form.', 'error');
             return;
         }
@@ -281,14 +309,20 @@
         const fullName = fullNameInput.value.trim();
         const email = emailInput.value.trim();
         const designation = document.getElementById('designation').value.trim();
-        const division = document.getElementById('division').value.trim();
+        const division = divisionSelect.value;
         const password = passwordInput.value;
 
         try {
             const response = await fetch(`${API_BASE}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ full_name: fullName, email, designation, division, password })
+                body: JSON.stringify({ 
+                    full_name: fullName, 
+                    email, 
+                    designation, 
+                    division, 
+                    password 
+                })
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message);

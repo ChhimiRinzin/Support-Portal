@@ -80,7 +80,9 @@ router.post('/login', async (req, res) => {
                 role: user.role,
                 can_handle_repair: user.can_handle_repair || false,
                 is_asws_authorized: user.is_asws_authorized || false,
-                is_manager: isManager
+                is_manager: isManager,
+                is_division_head: false,
+                is_vehicle_allocator: false
             }
         });
     }
@@ -123,7 +125,9 @@ router.post('/login', async (req, res) => {
                 role: user.role,
                 can_handle_repair: user.can_handle_repair || false,
                 is_asws_authorized: user.is_asws_authorized || false,
-                is_manager: isManager
+                is_manager: isManager,
+                is_division_head: false,
+                is_vehicle_allocator: false
             }
         });
     }
@@ -134,9 +138,9 @@ router.post('/login', async (req, res) => {
         let user;
         if (userResult.rows.length === 0) {
             const insertResult = await pool.query(
-                `INSERT INTO users (username, full_name, email, password_hash, department, role, is_asws_authorized)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-                ['adm_user', 'Administrative Officer', 'adm@bhutanaudit.gov.bt', 'dummy', 'Administration', 'manager', false]
+                `INSERT INTO users (username, full_name, email, password_hash, department, role, is_asws_authorized, is_vehicle_allocator)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+                ['adm_user', 'Administrative Officer', 'adm@bhutanaudit.gov.bt', 'dummy', 'Administration', 'manager', false, true]
             );
             user = insertResult.rows[0];
         } else {
@@ -162,7 +166,9 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 full_name: user.full_name,
                 role: user.role,
-                is_manager: true
+                is_manager: true,
+                is_division_head: false,
+                is_vehicle_allocator: true
             }
         });
     }
@@ -179,7 +185,14 @@ router.post('/login', async (req, res) => {
         const isManager = permCheck.rows.length > 0;
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, can_handle_repair: user.can_handle_repair || false, is_manager: isManager },
+            {
+                id: user.id,
+                email: user.email,
+                can_handle_repair: user.can_handle_repair || false,
+                is_manager: isManager,
+                is_division_head: user.is_division_head || false,
+                is_vehicle_allocator: user.is_vehicle_allocator || false
+            },
             process.env.JWT_SECRET || 'raa_support_secret',
             { expiresIn: '7d' }
         );
@@ -191,7 +204,9 @@ router.post('/login', async (req, res) => {
                 full_name: user.full_name,
                 can_handle_repair: user.can_handle_repair || false,
                 is_asws_authorized: user.is_asws_authorized || false,
-                is_manager: isManager
+                is_manager: isManager,
+                is_division_head: user.is_division_head || false,
+                is_vehicle_allocator: user.is_vehicle_allocator || false
             }
         });
     } catch (err) { res.status(500).json({ message: err.message }); }
@@ -247,7 +262,10 @@ router.get('/me', async (req, res) => {
     if (!token) return res.status(401).json({ message: 'No token' });
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await pool.query('SELECT id, full_name, email, designation, division, can_handle_repair, is_asws_authorized FROM users WHERE id = $1', [decoded.id]);
+        const user = await pool.query(
+            'SELECT id, full_name, email, designation, division, can_handle_repair, is_asws_authorized, is_division_head, is_vehicle_allocator FROM users WHERE id = $1',
+            [decoded.id]
+        );
         if (!user.rows.length) return res.status(404).json({ message: 'User not found' });
         res.json(user.rows[0]);
     } catch (err) { res.status(401).json({ message: 'Invalid token' }); }
